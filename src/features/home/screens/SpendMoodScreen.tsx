@@ -11,7 +11,7 @@ import { TradeListView } from '../components/TradeListView';
 
 type ViewMode = 'list' | 'calendar';
 
-export function TradeLogScreen() {
+export function SpendMoodScreen() {
   const { colors } = useTheme();
   const { t }      = useTranslation();
   const s          = makeStyles(colors);
