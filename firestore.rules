@@ -1,0 +1,79 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ─── VoiceJournalAI (pre-existing app on this Firebase project) ───
+    // Shared across all users by category — only the daily refreshTrendingTopics
+    // Cloud Function (admin SDK, bypasses rules) writes here.
+    match /trendingTopics/{category} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Collection-group read for useScheduledPosts (queries `generations` across every
+    // app at once) — a collectionGroup query has no path context to narrow against, so
+    // it needs its own rule matched against the denormalized `userId` field on each doc,
+    // separate from the nested path-segment rule below (which covers direct reads/writes
+    // scoped to a single app's subcollection).
+    match /{path=**}/generations/{generationId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      match /apps/{appId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+
+        match /generations/{generationId} {
+          allow read, create, update: if request.auth != null && request.auth.uid == userId;
+          // Deleting a scheduled post ("See All" screen's Delete action) is
+          // owner-only, same as everything else under this path.
+          allow delete: if request.auth != null && request.auth.uid == userId;
+        }
+
+        match /postPerformance/{postId} {
+          allow read, create, update, delete: if request.auth != null && request.auth.uid == userId;
+        }
+
+        // Written by generateLifecycleCopy (admin SDK, bypasses rules) — owner reads
+        // via useLifecycleCopy's live listener, never writes directly.
+        match /lifecycleCopy/{copyId} {
+          allow read: if request.auth != null && request.auth.uid == userId;
+          allow write: if false;
+        }
+
+        // Written only by generateMarketingContent's styleConsistencyCheck step (admin SDK,
+        // bypasses rules) — the owner can read these for debugging, never writes directly.
+        match /consistencyChecks/{checkId} {
+          allow read: if request.auth != null && request.auth.uid == userId;
+          allow write: if false;
+        }
+      }
+
+      // Written by validateIdea (admin SDK, bypasses rules) — owner reads via
+      // useIdeaValidations' live listener, never writes directly.
+      match /ideaValidations/{validationId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false;
+      }
+    }
+
+    // ─── SpendMood / expence-tracker (this app) ───
+    // Created only by classifyTransaction (admin SDK, bypasses rules); the client
+    // reads its own rows (queried by userId) and edits them via confirmTransaction's
+    // updateDoc on the confirm screen.
+    match /transactions/{transactionId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow update: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create, delete: if false;
+    }
+
+    // Written only by the updateNetWorth trigger (admin SDK, bypasses rules) — the
+    // owner reads their own doc live on the Dashboard/Net Worth screens.
+    match /netWorth/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+    }
+  }
+}

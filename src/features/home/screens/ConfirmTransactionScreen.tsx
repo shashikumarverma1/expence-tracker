@@ -142,7 +142,8 @@ export function ConfirmTransactionScreen() {
         rawSummary,
       });
       nav.navigate('HomeScreen');
-    } catch (e) {
+    } catch (e: any) {
+      setError(e?.message ?? 'Could not save this entry.');
       setIsSaving(false);
     }
   };
