@@ -17,8 +17,6 @@ export type Emotion =
   | 'worried'
   | 'excited';
 
-export type FundSource = 'Cash' | 'Bank/Digital Cash' | 'Card' | 'UPI' | 'Other';
-
 export const EXPENSE_CATEGORIES = [
   'Grocery', 'Food & Dining', 'Entertainment', 'Bills & Utilities',
   'Travel & Transport', 'Shopping', 'Health & Medical', 'Education',
@@ -44,12 +42,11 @@ export const EMOTIONS: Emotion[] = [
 ];
 
 // Maps an ASSET holding category -> the net-worth field it lives in. Income
-// categories (Salary, Freelance, …) aren't here — they credit fundSource directly.
+// categories (Salary, Freelance, …) aren't here — they credit Bank/Digital
+// Cash directly.
 export const ASSET_FIELD_MAP: Record<string, keyof NetWorth> = {
   'Cash': 'cash',
   'Bank/Digital Cash': 'digitalCash',
-  'Card': 'digitalCash',
-  'UPI': 'digitalCash',
   'Stocks': 'stocks',
   'Bonds': 'bonds',
   'FD': 'fd',
@@ -77,8 +74,6 @@ export interface Transaction {
   amount: number;
   currency: string;
   category: string | null;
-  fundSource: string | null;
-  merchantOrSource: string | null;
   emotion: Emotion;
   confidence: number;
   rawSummary: string;

@@ -25,9 +25,6 @@ Salary, Freelance, Business, Interest, Dividend, Gift, Bonus, Refund, Cash, Bank
 If an ASSET transcript doesn't name a specific source (e.g. "I earned 10 rupees"), default the category to "Business".
 If an EXPENSE transcript doesn't name a specific reason, default the category to "Shopping".
 
-## FUND SOURCE
-Detect where the money came from/went to if mentioned (cash, bank, card, UPI, specific account). If not mentioned, default to "Bank/Digital Cash".
-
 ## EMOTION DETECTION
 Infer the emotional tone from word choice, tone words, and context. One of:
 happy, neutral, guilty, stressed, impulsive, proud, worried, excited
@@ -41,8 +38,6 @@ Respond ONLY with valid JSON. No markdown, no backticks, no preamble, no explana
   "amount": number,
   "currency": "INR" (default, or detected currency),
   "category": "string — one of the categories listed above for the chosen type",
-  "fund_source": "string (Cash | Bank/Digital Cash | Card | UPI | Other, null if not applicable)",
-  "merchant_or_source": "string — who was paid or who paid (e.g. 'Swiggy', 'Company', 'Broker', null if unclear)",
   "emotion": "string from emotion list",
   "confidence": number (0.0 to 1.0 — your certainty on type + category classification),
   "raw_summary": "string — one short natural-language restatement of what happened, in English, max 12 words"
@@ -56,39 +51,37 @@ Respond ONLY with valid JSON. No markdown, no backticks, no preamble, no explana
 ## EXAMPLES
 
 Input: "maine 50000 salary mili is mahine"
-Output: {"type":"ASSET","amount":50000,"currency":"INR","category":"Salary","fund_source":"Bank/Digital Cash","merchant_or_source":"Employer","emotion":"happy","confidence":0.95,"raw_summary":"Received monthly salary of 50000"}
+Output: {"type":"ASSET","amount":50000,"currency":"INR","category":"Salary","emotion":"happy","confidence":0.95,"raw_summary":"Received monthly salary of 50000"}
 
 Input: "50 rupaye ka doodh liya"
-Output: {"type":"EXPENSE","amount":50,"currency":"INR","category":"Grocery","fund_source":"Bank/Digital Cash","merchant_or_source":null,"emotion":"neutral","confidence":0.9,"raw_summary":"Bought milk for 50 rupees"}
+Output: {"type":"EXPENSE","amount":50,"currency":"INR","category":"Grocery","emotion":"neutral","confidence":0.9,"raw_summary":"Bought milk for 50 rupees"}
 
 Input: "5 rupee ka milk liya"
-Output: {"type":"EXPENSE","amount":5,"currency":"INR","category":"Grocery","fund_source":"Bank/Digital Cash","merchant_or_source":null,"emotion":"neutral","confidence":0.9,"raw_summary":"Bought milk for 5 rupees"}
+Output: {"type":"EXPENSE","amount":5,"currency":"INR","category":"Grocery","emotion":"neutral","confidence":0.9,"raw_summary":"Bought milk for 5 rupees"}
 
 Input: "5000 ka stock khareeda Zerodha se"
-Output: {"type":"ASSET","amount":5000,"currency":"INR","category":"Stocks","fund_source":"Bank/Digital Cash","merchant_or_source":"Zerodha","emotion":"neutral","confidence":0.92,"raw_summary":"Bought stocks worth 5000 via Zerodha"}
+Output: {"type":"ASSET","amount":5000,"currency":"INR","category":"Stocks","emotion":"neutral","confidence":0.92,"raw_summary":"Bought stocks worth 5000 via Zerodha"}
 
 Input: "stressed tha to 2000 ka online shopping kar liya"
-Output: {"type":"EXPENSE","amount":2000,"currency":"INR","category":"Shopping","fund_source":"Bank/Digital Cash","merchant_or_source":null,"emotion":"stressed","confidence":0.88,"raw_summary":"Impulsive online shopping while stressed"}
+Output: {"type":"EXPENSE","amount":2000,"currency":"INR","category":"Shopping","emotion":"stressed","confidence":0.88,"raw_summary":"Impulsive online shopping while stressed"}
 
 Input: "kuch kharch kiya aaj"
-Output: {"type":"EXPENSE","amount":0,"currency":"INR","category":"Shopping","fund_source":null,"merchant_or_source":null,"emotion":"neutral","confidence":0.2,"raw_summary":"Unclear expense mentioned, amount missing"}
+Output: {"type":"EXPENSE","amount":0,"currency":"INR","category":"Shopping","emotion":"neutral","confidence":0.2,"raw_summary":"Unclear expense mentioned, amount missing"}
 
 Input: "20000 FD me dala"
-Output: {"type":"ASSET","amount":20000,"currency":"INR","category":"FD","fund_source":"Bank/Digital Cash","merchant_or_source":null,"emotion":"neutral","confidence":0.9,"raw_summary":"Put 20000 into an FD"}
+Output: {"type":"ASSET","amount":20000,"currency":"INR","category":"FD","emotion":"neutral","confidence":0.9,"raw_summary":"Put 20000 into an FD"}
 
 Input: "I earned 10 rupee"
-Output: {"type":"ASSET","amount":10,"currency":"INR","category":"Business","fund_source":"Bank/Digital Cash","merchant_or_source":null,"emotion":"happy","confidence":0.7,"raw_summary":"Earned 10 rupees"}
+Output: {"type":"ASSET","amount":10,"currency":"INR","category":"Business","emotion":"happy","confidence":0.7,"raw_summary":"Earned 10 rupees"}
 
 Input: "maine 200 rupee khoye"
-Output: {"type":"EXPENSE","amount":200,"currency":"INR","category":"Shopping","fund_source":"Cash","merchant_or_source":null,"emotion":"worried","confidence":0.6,"raw_summary":"Lost 200 rupees"}`;
+Output: {"type":"EXPENSE","amount":200,"currency":"INR","category":"Shopping","emotion":"worried","confidence":0.6,"raw_summary":"Lost 200 rupees"}`;
 
 interface ClassifiedFields {
   type: string;
   amount: number;
   currency: string;
   category: string | null;
-  fund_source: string | null;
-  merchant_or_source: string | null;
   emotion: string;
   confidence: number;
   raw_summary: string;
@@ -179,8 +172,6 @@ export const classifyTransaction = functions
       amount: 0,
       currency: 'INR',
       category: 'Shopping',
-      fund_source: null,
-      merchant_or_source: null,
       emotion: 'neutral',
       confidence: 0.1,
       raw_summary: transcript.slice(0, 80),
@@ -195,8 +186,6 @@ export const classifyTransaction = functions
       amount: fields.amount,
       currency: fields.currency ?? 'INR',
       category: fields.category ?? null,
-      fundSource: fields.fund_source ?? null,
-      merchantOrSource: fields.merchant_or_source ?? null,
       emotion: fields.emotion ?? 'neutral',
       confidence: fields.confidence ?? 0,
       rawSummary: fields.raw_summary ?? '',

@@ -4,12 +4,10 @@ import { db, REGION } from './config';
 
 // ASSET holding categories -> the net-worth field they live in. Categories not
 // listed here (Salary, Freelance, Business, Interest, Dividend, Gift, Bonus,
-// Refund) are income — they credit fundSource directly instead.
+// Refund) are income — they credit Bank/Digital Cash directly instead.
 const ASSET_FIELD_MAP: Record<string, string> = {
   'Cash': 'cash',
   'Bank/Digital Cash': 'digitalCash',
-  'Card': 'digitalCash',
-  'UPI': 'digitalCash',
   'Stocks': 'stocks',
   'Bonds': 'bonds',
   'FD': 'fd',
@@ -30,9 +28,10 @@ const EMPTY_NET_WORTH: Record<string, number> = Object.fromEntries(
   [...ASSET_FIELD_KEYS, 'liabilities', 'totalAssets', 'totalNetWorth'].map((k) => [k, 0]),
 );
 
-function fundField(fundSource: string | null | undefined): string {
-  return ASSET_FIELD_MAP[fundSource ?? 'Bank/Digital Cash'] ?? 'digitalCash';
-}
+// Every cash movement (expenses paid, income received, money moved into a
+// holding) is assumed to flow through the same liquid bucket now that fund
+// source is no longer tracked per-transaction.
+const CASH_FIELD = 'digitalCash';
 
 /** Holding category -> net-worth field, or null if `category` is an income category. */
 function holdingField(category: string | null | undefined): string | null {
@@ -58,11 +57,10 @@ export const updateNetWorth = functions
     if (after.needsConfirmation) return; // still awaiting user confirmation
     if (after.appliedToNetWorth) return; // idempotency guard — already applied
 
-    const { userId, type, amount, fundSource, category } = after as {
+    const { userId, type, amount, category } = after as {
       userId: string;
       type: string;
       amount: number;
-      fundSource: string | null;
       category: string | null;
     };
 
@@ -78,8 +76,7 @@ export const updateNetWorth = functions
 
       switch (type) {
         case 'EXPENSE': {
-          const f = fundField(fundSource);
-          current[f] = (current[f] ?? 0) - amount;
+          current[CASH_FIELD] = (current[CASH_FIELD] ?? 0) - amount;
           break;
         }
         case 'ASSET': {
@@ -87,13 +84,11 @@ export const updateNetWorth = functions
           if (holding) {
             // Holding category (Stocks, FD, …) — money moves out of cash/bank
             // into that dedicated field.
-            const f = fundField(fundSource);
             current[holding] = (current[holding] ?? 0) + amount;
-            current[f] = (current[f] ?? 0) - amount;
+            current[CASH_FIELD] = (current[CASH_FIELD] ?? 0) - amount;
           } else {
-            // Income category (Salary, Freelance, …) — credits fundSource directly.
-            const f = fundField(fundSource);
-            current[f] = (current[f] ?? 0) + amount;
+            // Income category (Salary, Freelance, …) — credits cash/bank directly.
+            current[CASH_FIELD] = (current[CASH_FIELD] ?? 0) + amount;
           }
           break;
         }

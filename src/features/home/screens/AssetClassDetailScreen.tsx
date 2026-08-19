@@ -39,7 +39,7 @@ export function AssetClassDetailScreen() {
       </View>
       <View style={s.mid}>
         <CText txt={item.rawSummary || 'Asset added'} style={[s.summary, { color: colors.text }]} numberOfLines={2} />
-        <CText txt={`${formatDate(item.timestamp)}${item.merchantOrSource ? ' · ' + item.merchantOrSource : ''}`} style={[s.meta, { color: colors.textMuted }]} />
+        <CText txt={formatDate(item.timestamp)} style={[s.meta, { color: colors.textMuted }]} />
       </View>
       <CText txt={`+${formatINR(item.amount)}`} style={[s.amount, { color: brandColors.greenText }]} />
     </View>

@@ -33,16 +33,12 @@ const TYPE_LABEL: Record<TransactionType, string> = {
   EXPENSE: 'Expense', ASSET: 'Asset',
 };
 
-const FUND_SOURCES = ['Bank/Digital Cash', 'Cash', 'Card', 'UPI', 'Other'];
-
 interface ClassifyResult {
   id: string;
   type: TransactionType;
   amount: number;
   currency: string;
   category: string | null;
-  fund_source: string | null;
-  merchant_or_source: string | null;
   emotion: Emotion;
   confidence: number;
   raw_summary: string;
@@ -78,8 +74,6 @@ export function ConfirmTransactionScreen() {
   const [type, setType] = useState<TransactionType>('EXPENSE');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<string | null>(null);
-  const [fundSource, setFundSource] = useState<string | null>('Bank/Digital Cash');
-  const [merchant, setMerchant] = useState('');
   const [emotion, setEmotion] = useState<Emotion>('neutral');
   const [rawSummary, setRawSummary] = useState('');
   const [confidence, setConfidence] = useState(1);
@@ -96,8 +90,6 @@ export function ConfirmTransactionScreen() {
         setType(d.type);
         setAmount(typeof d.amount === 'number' && !isNaN(d.amount) ? String(d.amount) : '');
         setCategory(d.category);
-        setFundSource(d.fund_source ?? 'Bank/Digital Cash');
-        setMerchant(d.merchant_or_source ?? '');
         setEmotion(d.emotion ?? 'neutral');
         setRawSummary(d.raw_summary ?? '');
         setConfidence(d.confidence ?? 0);
@@ -119,8 +111,6 @@ export function ConfirmTransactionScreen() {
         amount: amt,
         currency: 'INR',
         category,
-        fundSource,
-        merchantOrSource: merchant || null,
         emotion,
         rawSummary,
       });
@@ -190,28 +180,12 @@ export function ConfirmTransactionScreen() {
               ))}
             </View>
 
-            <CText txt="Fund Source" style={styles2.label} />
-            <View style={styles2.chipRow}>
-              {FUND_SOURCES.map((c) => (
-                <Chip key={c} label={c} active={fundSource === c} onPress={() => setFundSource(c)} />
-              ))}
-            </View>
-
             <CText txt="Emotion" style={styles2.label} />
             <View style={styles2.chipRow}>
               {EMOTIONS.map((e) => (
                 <Chip key={e} label={e} active={emotion === e} onPress={() => setEmotion(e)} />
               ))}
             </View>
-
-            <CText txt="Merchant / Source" style={styles2.label} />
-            <TextInput
-              value={merchant}
-              onChangeText={setMerchant}
-              placeholder="e.g. Swiggy, Zerodha, Employer"
-              placeholderTextColor={colors.textMuted}
-              style={styles2.input}
-            />
 
             <TouchableOpacity
               style={[styles2.saveBtn, (isSaving || !amount) && { opacity: 0.6 }]}
