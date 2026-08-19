@@ -144,7 +144,7 @@ function NetWorthRing({ netWorth, colors }: { netWorth: NetWorth; colors: AppCol
             <View key={seg.key} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 3 }}>
               <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: seg.color, marginRight: 6 }} />
               <CText
-                txt={`${RING_LABEL[seg.key] ?? seg.key} · ₹${formatAmount(seg.value)}`}
+                txt={`${RING_LABEL[seg.key] ?? seg.key} · ${formatAmount(seg.value)}`}
                 style={[s.statLabel, { color: colors.text, fontSize: 12 }]}
                 numberOfLines={1}
               />
@@ -307,7 +307,7 @@ export function HomeScreen() {
           <NetWorthRing netWorth={netWorth} colors={colors} />
           <View style={{ alignItems: 'flex-end' }}>
             <CText style={[s.statValue, { color: colors.text, fontSize: 18 }]}>
-              {`${netWorth.totalNetWorth < 0 ? '-' : ''}₹${formatAmount(netWorth.totalNetWorth)}`}
+              {`${netWorth.totalNetWorth < 0 ? '-' : ''}${formatAmount(netWorth.totalNetWorth)}`}
             </CText>
             <CText style={[s.statLabel, { color: colors.textMuted, fontSize: 11 }]}>
               net worth
