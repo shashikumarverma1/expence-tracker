@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import CText from '../../../core/component/CText';
 import { useTheme } from '../../../core/hook';
 import { AppColors, colors as brandColors } from '../../../core/utils';
-import { TradeEntry, TradeResult, useTradeLog } from '../hooks/useTradeLog';
+import { TradeEntry, TradeResult, useTradeLog } from '../hooks/useSpendMood';
 
 // ─── Config ──────────────────────────────────────────────────────
 

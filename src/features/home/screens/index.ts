@@ -8,4 +8,4 @@ export * from './DashboardScreen';
 // old trade-journal domain — superseded by ConfirmTransactionScreen for entry
 // confirm/edit; the calendar/list view still needs porting to transactions.
 export * from './TradeEntryDetailScreen';
-export * from './TradeLogScreen';
+export * from './SpendMoodScreen';

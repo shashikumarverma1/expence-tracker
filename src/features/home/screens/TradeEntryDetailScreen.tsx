@@ -21,7 +21,7 @@ import { AppColors } from '../../../core/utils';
 import {
   collection, addDoc, doc, updateDoc, increment, serverTimestamp,
 } from 'firebase/firestore';
-import { TradeResult, useTradeLog } from '../hooks/useTradeLog';
+import { TradeResult, useTradeLog } from '../hooks/useSpendMood';
 import { useIsPro } from '../../subscription/hooks/useIsPro';
 import { SubscriptionModal } from '../../subscription/screens/SubscriptionModal';
 import { db } from '../../../core/config/firebase';

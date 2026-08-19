@@ -6,7 +6,7 @@ import * as React from "react";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { RootStack } from "../stack";
 import { AuthScreen, SettingsScreen, NotificationScreen, PrivacyPolicyScreen, TermsOfUseScreen } from "../../features";
-import { TradeLogOnboardingScreen } from "../../features/onboarding/screens/TradeLogOnboardingScreen";
+import { TradeLogOnboardingScreen } from "../../features/onboarding/screens/SpendMoodOnboardingScreen";
 import { useAuthStore } from "../../core/store";
 import { useSubscriptionStore } from "../../core/store/subscription/useSubscriptionStore";
 import { useTheme } from "../../core/hook";

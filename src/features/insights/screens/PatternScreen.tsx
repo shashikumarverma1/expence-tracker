@@ -16,7 +16,7 @@ import CText from '../../../core/component/CText';
 import { useTheme } from '../../../core/hook';
 import { AppColors, colors as brandColors, font, radius, shadow } from '../../../core/utils';
 import { TradeCalendarView } from '../../home/components/TradeCalendarView';
-import { TradeEmotion, TradeEntry, TradeResult, useTradeLog } from '../../home/hooks/useTradeLog';
+import { TradeEmotion, TradeEntry, TradeResult, useTradeLog } from '../../home/hooks/useSpendMood';
 import { TradePattern, useTradePatterns } from '../hooks/useTradePatterns';
 import { DailyReport, MonthlyReport, TradePnl, WeeklyReport, useTradeReports } from '../hooks/useTradeReports';
 

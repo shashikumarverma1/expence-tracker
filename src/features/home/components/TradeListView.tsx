@@ -12,7 +12,7 @@ import CText from '../../../core/component/CText';
 import { useTheme } from '../../../core/hook';
 import { AppColors, colors as brandColors } from '../../../core/utils';
 import { auth } from '../../../core/config';
-import { TradeEntry, TradeEmotion, TradeResult, setTradeResult, useTradeLog } from '../hooks/useTradeLog';
+import { TradeEntry, TradeEmotion, TradeResult, setTradeResult, useTradeLog } from '../hooks/useSpendMood';
 
 // ─── Config ──────────────────────────────────────────────────────
 
