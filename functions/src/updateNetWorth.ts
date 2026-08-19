@@ -45,6 +45,13 @@ function holdingField(category: string | null | undefined): string | null {
  * Functions triggers can retry/redeliver and this must stay idempotent.
  * Only applies once needsConfirmation is false (either it was clear from the
  * start, or the user just confirmed/edited it in the app).
+ *
+ * The guard is re-checked with a fresh transactional read inside
+ * db.runTransaction (not just off the trigger's `change.after` snapshot) —
+ * two near-simultaneous writes to the same doc (e.g. its create event and an
+ * immediate client update) each get their own stale snapshot at invocation
+ * time, so checking only that snapshot let both invocations pass the guard
+ * and double-apply the amount.
  */
 export const updateNetWorth = functions
   .region(REGION)
@@ -54,7 +61,6 @@ export const updateNetWorth = functions
     if (!after) return; // deleted — leave net worth as-is, don't auto-reverse
 
     if (after.needsConfirmation) return; // still awaiting user confirmation
-    if (after.appliedToNetWorth) return; // idempotency guard — already applied
 
     const { userId, type, amount, category } = after as {
       userId: string;
@@ -66,9 +72,13 @@ export const updateNetWorth = functions
     if (!userId || typeof amount !== 'number') return;
 
     const netWorthRef = db.collection('netWorth').doc(userId);
+    const txnRef = change.after.ref;
 
     await db.runTransaction(async (tx) => {
-      const snap = await tx.get(netWorthRef);
+      const [txnSnap, snap] = await Promise.all([tx.get(txnRef), tx.get(netWorthRef)]);
+
+      if (!txnSnap.exists || txnSnap.data()?.appliedToNetWorth) return; // already applied
+
       const current: Record<string, number> = snap.exists
         ? { ...EMPTY_NET_WORTH, ...(snap.data() as Record<string, number>) }
         : { ...EMPTY_NET_WORTH };

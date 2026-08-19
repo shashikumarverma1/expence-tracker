@@ -93,8 +93,8 @@ const RING_LABEL: Record<string, string> = {
 };
 
 function NetWorthRing({ netWorth, colors }: { netWorth: NetWorth; colors: AppColors }) {
-  const size = 76;
-  const strokeWidth = 10;
+  const size = 112;
+  const strokeWidth = 12;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
 
@@ -132,16 +132,27 @@ function NetWorthRing({ netWorth, colors }: { netWorth: NetWorth; colors: AppCol
             );
           })}
         </Svg>
+        <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 }}>
+            <CText
+              txt={`${netWorth.totalNetWorth < 0 ? '-' : ''}${formatAmount(netWorth.totalNetWorth)}`}
+              style={[s.statValue, { color: colors.text, fontSize: 15 }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            />
+            <CText txt="net worth" style={[s.statLabel, { color: colors.textMuted, fontSize: 10 }]} />
+          </View>
+        </View>
       </View>
-      <View style={{ marginLeft: 12, flex: 1 }}>
+      <View style={{ marginLeft: 14, flex: 1 }}>
         {segments.length === 0 ? (
           <CText txt="No assets recorded yet" style={[s.statLabel, { color: colors.textMuted }]} />
         ) : segments
           .slice()
           .sort((a, b) => b.value - a.value)
-          .slice(0, 3)
+          .slice(0, 4)
           .map((seg) => (
-            <View key={seg.key} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 3 }}>
+            <View key={seg.key} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 5 }}>
               <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: seg.color, marginRight: 6 }} />
               <CText
                 txt={`${RING_LABEL[seg.key] ?? seg.key} · ${formatAmount(seg.value)}`}
@@ -305,16 +316,11 @@ export function HomeScreen() {
           style={[s.statCard, { backgroundColor: colors.surface }, shadow.card]}
         >
           <NetWorthRing netWorth={netWorth} colors={colors} />
-          <View style={{ alignItems: 'flex-end' }}>
-            <CText style={[s.statValue, { color: colors.text, fontSize: 18 }]}>
-              {`${netWorth.totalNetWorth < 0 ? '-' : ''}${formatAmount(netWorth.totalNetWorth)}`}
-            </CText>
-            <CText style={[s.statLabel, { color: colors.textMuted, fontSize: 11 }]}>
-              net worth
-            </CText>
+          <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
             <CText style={[s.statLabel, { color: colors.textMuted, fontSize: 11 }]}>
               {todayCount} {todayCount === 1 ? 'entry' : 'entries'} today
             </CText>
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} style={{ marginTop: 4 }} />
           </View>
         </TouchableOpacity>
 
