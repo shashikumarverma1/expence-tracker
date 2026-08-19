@@ -1,1 +1,1 @@
-export * from './TradeLogOnboardingScreen';
+export * from './SpendMoodOnboardingScreen';
