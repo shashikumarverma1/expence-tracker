@@ -22,7 +22,7 @@ export type FundSource = 'Cash' | 'Bank/Digital Cash' | 'Card' | 'UPI' | 'Other'
 export const EXPENSE_CATEGORIES = [
   'Grocery', 'Food & Dining', 'Entertainment', 'Bills & Utilities',
   'Travel & Transport', 'Shopping', 'Health & Medical', 'Education',
-  'Rent', 'Subscriptions', 'Other',
+  'Rent', 'Subscriptions',
 ] as const;
 
 // ASSET categories split into two flavors that net worth treats differently
@@ -34,7 +34,7 @@ export const ASSET_INCOME_CATEGORIES = [
 
 export const ASSET_HOLDING_CATEGORIES = [
   'Cash', 'Bank/Digital Cash', 'Stocks', 'Bonds', 'FD', 'RD',
-  'Mutual Funds', 'Crypto', 'Gold', 'Real Estate', 'Other',
+  'Mutual Funds', 'Crypto', 'Gold', 'Real Estate',
 ] as const;
 
 export const ASSET_CATEGORIES = [...ASSET_INCOME_CATEGORIES, ...ASSET_HOLDING_CATEGORIES] as const;

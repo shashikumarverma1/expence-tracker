@@ -8,18 +8,22 @@ const SYSTEM_PROMPT = `You are a financial transaction classifier for a voice-ba
 
 ## TRANSACTION TYPES
 Classify into exactly one type:
-- "EXPENSE" — money spent on consumption (does not create a lasting asset)
-- "ASSET" — everything else: money coming in (salary, freelance payment, business income, interest, dividend, gift, bonus, refund) OR money held/moved into an asset (cash, bank balance, stocks, FD, RD, mutual funds, crypto, gold, real estate)
+- "EXPENSE" — money spent, paid, or lost ("kharch kiya", "spent", "paid for", "lost", "gaya/gayi") — does not create a lasting asset
+- "ASSET" — money earned/received, or money held/moved into an asset ("kamaya", "mila", "earned", "received", salary, freelance payment, business income, interest, dividend, gift, bonus, refund, OR cash, bank balance, stocks, FD, RD, mutual funds, crypto, gold, real estate)
 
-## CATEGORIES (choose based on type)
+Rule of thumb: "earned"/"income"/"got paid"/"mila" → ASSET. "spent"/"lost"/"paid"/"kharch"/"gaya" → EXPENSE.
+
+## CATEGORIES (choose based on type — always pick the closest match, never leave it generic)
 
 For EXPENSE, category must be one of:
-Grocery, Food & Dining, Entertainment, Bills & Utilities, Travel & Transport, Shopping, Health & Medical, Education, Rent, Subscriptions, Other
+Grocery, Food & Dining, Entertainment, Bills & Utilities, Travel & Transport, Shopping, Health & Medical, Education, Rent, Subscriptions
 
 For ASSET, category must be one of:
-Salary, Freelance, Business, Interest, Dividend, Gift, Bonus, Refund, Cash, Bank/Digital Cash, Stocks, Bonds, FD, RD, Mutual Funds, Crypto, Gold, Real Estate, Other
+Salary, Freelance, Business, Interest, Dividend, Gift, Bonus, Refund, Cash, Bank/Digital Cash, Stocks, Bonds, FD, RD, Mutual Funds, Crypto, Gold, Real Estate
 
 (The first eight — Salary..Refund — are money coming in. The rest are asset holdings being added to.)
+If an ASSET transcript doesn't name a specific source (e.g. "I earned 10 rupees"), default the category to "Business".
+If an EXPENSE transcript doesn't name a specific reason, default the category to "Shopping".
 
 ## FUND SOURCE
 Detect where the money came from/went to if mentioned (cash, bank, card, UPI, specific account). If not mentioned, default to "Bank/Digital Cash".
@@ -67,10 +71,16 @@ Input: "stressed tha to 2000 ka online shopping kar liya"
 Output: {"type":"EXPENSE","amount":2000,"currency":"INR","category":"Shopping","fund_source":"Bank/Digital Cash","merchant_or_source":null,"emotion":"stressed","confidence":0.88,"raw_summary":"Impulsive online shopping while stressed"}
 
 Input: "kuch kharch kiya aaj"
-Output: {"type":"EXPENSE","amount":0,"currency":"INR","category":"Other","fund_source":null,"merchant_or_source":null,"emotion":"neutral","confidence":0.2,"raw_summary":"Unclear expense mentioned, amount missing"}
+Output: {"type":"EXPENSE","amount":0,"currency":"INR","category":"Shopping","fund_source":null,"merchant_or_source":null,"emotion":"neutral","confidence":0.2,"raw_summary":"Unclear expense mentioned, amount missing"}
 
 Input: "20000 FD me dala"
-Output: {"type":"ASSET","amount":20000,"currency":"INR","category":"FD","fund_source":"Bank/Digital Cash","merchant_or_source":null,"emotion":"neutral","confidence":0.9,"raw_summary":"Put 20000 into an FD"}`;
+Output: {"type":"ASSET","amount":20000,"currency":"INR","category":"FD","fund_source":"Bank/Digital Cash","merchant_or_source":null,"emotion":"neutral","confidence":0.9,"raw_summary":"Put 20000 into an FD"}
+
+Input: "I earned 10 rupee"
+Output: {"type":"ASSET","amount":10,"currency":"INR","category":"Business","fund_source":"Bank/Digital Cash","merchant_or_source":null,"emotion":"happy","confidence":0.7,"raw_summary":"Earned 10 rupees"}
+
+Input: "maine 200 rupee khoye"
+Output: {"type":"EXPENSE","amount":200,"currency":"INR","category":"Shopping","fund_source":"Cash","merchant_or_source":null,"emotion":"worried","confidence":0.6,"raw_summary":"Lost 200 rupees"}`;
 
 interface ClassifiedFields {
   type: string;
@@ -168,7 +178,7 @@ export const classifyTransaction = functions
       type: 'EXPENSE',
       amount: 0,
       currency: 'INR',
-      category: 'Other',
+      category: 'Shopping',
       fund_source: null,
       merchant_or_source: null,
       emotion: 'neutral',
