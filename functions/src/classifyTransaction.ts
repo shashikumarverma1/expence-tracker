@@ -10,8 +10,9 @@ const SYSTEM_PROMPT = `You are a financial transaction classifier for a voice-ba
 Classify into exactly one type:
 - "EXPENSE" — money spent, paid, or lost ("kharch kiya", "spent", "paid for", "lost", "gaya/gayi") — does not create a lasting asset
 - "ASSET" — money earned/received, or money held/moved into an asset ("kamaya", "mila", "earned", "received", salary, freelance payment, business income, interest, dividend, gift, bonus, refund, OR cash, bank balance, stocks, FD, RD, mutual funds, crypto, gold, real estate)
+- "OTHER" — doesn't fit EXPENSE or ASSET: lending money to someone, borrowing money (not a formal loan), a reminder/note-to-self about money, or anything genuinely ambiguous. Use this rarely — only when EXPENSE/ASSET truly don't apply.
 
-Rule of thumb: "earned"/"income"/"got paid"/"mila" → ASSET. "spent"/"lost"/"paid"/"kharch"/"gaya" → EXPENSE.
+Rule of thumb: "earned"/"income"/"got paid"/"mila" → ASSET. "spent"/"lost"/"paid"/"kharch"/"gaya" → EXPENSE. Everything else that's unclear → OTHER.
 
 ## CATEGORIES (choose based on type — always pick the closest match, never leave it generic)
 
@@ -20,6 +21,8 @@ Grocery, Food & Dining, Entertainment, Bills & Utilities, Travel & Transport, Sh
 
 For ASSET, category must be one of:
 Salary, Freelance, Business, Interest, Dividend, Gift, Bonus, Refund, Cash, Bank/Digital Cash, Stocks, Bonds, FD, RD, Mutual Funds, Crypto, Gold, Real Estate
+
+For OTHER, category is always null — it has no subcategories.
 
 (The first eight — Salary..Refund — are money coming in. The rest are asset holdings being added to.)
 If an ASSET transcript doesn't name a specific source (e.g. "I earned 10 rupees"), default the category to "Business".
@@ -34,7 +37,7 @@ If no emotional signal is present, use "neutral".
 Respond ONLY with valid JSON. No markdown, no backticks, no preamble, no explanation. Exact schema:
 
 {
-  "type": "EXPENSE | ASSET",
+  "type": "EXPENSE | ASSET | OTHER",
   "amount": number,
   "currency": "INR" (default, or detected currency),
   "category": "string — one of the categories listed above for the chosen type",
@@ -75,7 +78,10 @@ Input: "I earned 10 rupee"
 Output: {"type":"ASSET","amount":10,"currency":"INR","category":"Business","emotion":"happy","confidence":0.7,"raw_summary":"Earned 10 rupees"}
 
 Input: "maine 200 rupee khoye"
-Output: {"type":"EXPENSE","amount":200,"currency":"INR","category":"Shopping","emotion":"worried","confidence":0.6,"raw_summary":"Lost 200 rupees"}`;
+Output: {"type":"EXPENSE","amount":200,"currency":"INR","category":"Shopping","emotion":"worried","confidence":0.6,"raw_summary":"Lost 200 rupees"}
+
+Input: "maine dost ko 500 udhaar diye"
+Output: {"type":"OTHER","amount":500,"currency":"INR","category":null,"emotion":"neutral","confidence":0.7,"raw_summary":"Lent 500 to a friend"}`;
 
 interface ClassifiedFields {
   type: string;

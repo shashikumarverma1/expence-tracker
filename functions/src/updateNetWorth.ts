@@ -32,79 +32,84 @@ const EMPTY_NET_WORTH: Record<string, number> = Object.fromEntries(
 // isn't tracked per-transaction.
 const CASH_FIELD = 'digitalCash';
 
-/** Holding category -> net-worth field, or null if `category` is an income category. */
-function holdingField(category: string | null | undefined): string | null {
-  if (!category) return null;
-  return ASSET_FIELD_MAP[category] ?? null;
+interface AppliedFields {
+  type: string;
+  amount: number;
+  category: string | null;
+}
+
+/** type/amount/category -> the signed per-field net-worth delta it represents. */
+function computeDelta(f: AppliedFields): Record<string, number> {
+  if (f.type === 'EXPENSE') {
+    return { [CASH_FIELD]: -f.amount };
+  }
+  if (f.type === 'ASSET') {
+    const holding = f.category ? ASSET_FIELD_MAP[f.category] : undefined;
+    return holding ? { [holding]: f.amount } : { [CASH_FIELD]: f.amount };
+  }
+  return {};
 }
 
 /**
- * Firestore trigger on transactions/{transactionId} create/update.
- * Applies the transaction's effect on netWorth/{userId} exactly once — guarded
- * by an `appliedToNetWorth` flag on the transaction doc itself, since Cloud
- * Functions triggers can retry/redeliver and this must stay idempotent.
- * Only applies once needsConfirmation is false (either it was clear from the
- * start, or the user just confirmed/edited it in the app).
+ * Firestore trigger on transactions/{transactionId} create/update/delete.
+ * Keeps netWorth/{userId} in sync by reversing whatever this transaction's
+ * *last applied* effect was (stored as `appliedFields` on the doc) and, if
+ * the doc still exists and is confirmed, re-applying its *current* effect —
+ * all inside one Firestore transaction with fresh reads.
  *
- * The guard is re-checked with a fresh transactional read inside
- * db.runTransaction (not just off the trigger's `change.after` snapshot) —
- * two near-simultaneous writes to the same doc (e.g. its create event and an
- * immediate client update) each get their own stale snapshot at invocation
- * time, so checking only that snapshot let both invocations pass the guard
- * and double-apply the amount.
+ * This single reverse-then-reapply step (instead of an apply-once boolean
+ * flag) is what makes edits and deletes work correctly, and it's naturally
+ * idempotent: a retried/duplicate invocation reads the same already-applied
+ * state and reapplies the same delta, netting to no change. That also fixes
+ * the double-counting race an apply-once flag had, where two near-
+ * simultaneous writes to the same doc could each see "not yet applied" and
+ * both apply the amount.
  */
 export const updateNetWorth = functions
   .region(REGION)
   .firestore.document('transactions/{transactionId}')
   .onWrite(async (change, context) => {
-    const after = change.after.exists ? change.after.data() : null;
-    if (!after) return; // deleted — leave net worth as-is, don't auto-reverse
+    const referenceData = change.after.exists ? change.after.data() : change.before.data();
+    const userId = referenceData?.userId as string | undefined;
+    if (!userId) return;
 
-    if (after.needsConfirmation) return; // still awaiting user confirmation
-
-    const { userId, type, amount, category } = after as {
-      userId: string;
-      type: string;
-      amount: number;
-      category: string | null;
-    };
-
-    if (!userId || typeof amount !== 'number') return;
-
+    const txnRef = db.collection('transactions').doc(context.params.transactionId);
     const netWorthRef = db.collection('netWorth').doc(userId);
-    const txnRef = change.after.ref;
 
     await db.runTransaction(async (tx) => {
-      const [txnSnap, snap] = await Promise.all([tx.get(txnRef), tx.get(netWorthRef)]);
+      const [txnSnap, nwSnap] = await Promise.all([tx.get(txnRef), tx.get(netWorthRef)]);
 
-      if (!txnSnap.exists || txnSnap.data()?.appliedToNetWorth) return; // already applied
-
-      const current: Record<string, number> = snap.exists
-        ? { ...EMPTY_NET_WORTH, ...(snap.data() as Record<string, number>) }
+      const current: Record<string, number> = nwSnap.exists
+        ? { ...EMPTY_NET_WORTH, ...(nwSnap.data() as Record<string, number>) }
         : { ...EMPTY_NET_WORTH };
 
-      switch (type) {
-        case 'EXPENSE': {
-          current[CASH_FIELD] = (current[CASH_FIELD] ?? 0) - amount;
-          break;
-        }
-        case 'ASSET': {
-          const holding = holdingField(category);
-          if (holding) {
-            // Holding category (Stocks, FD, …) — adds to that asset field.
-            // Not debited from cash: there's no tracked starting cash
-            // balance, so treating this as a cash-to-asset transfer would
-            // just drive digitalCash negative for every investment.
-            current[holding] = (current[holding] ?? 0) + amount;
-          } else {
-            // Income category (Salary, Freelance, …) — credits cash/bank directly.
-            current[CASH_FIELD] = (current[CASH_FIELD] ?? 0) + amount;
-          }
-          break;
-        }
-        default:
-          return; // unknown type — don't touch net worth
+      // Reverse whatever was last applied for this doc (read fresh here, not
+      // from the trigger's before/after params, so retries/races converge).
+      // If the doc's been deleted, its final pre-delete data (still carrying
+      // appliedFields) is on `change.before` — it can't change further.
+      const priorSrc = txnSnap.exists ? txnSnap.data() : change.before.data();
+      const priorApplied = priorSrc?.appliedFields as AppliedFields | undefined;
+      if (priorApplied) {
+        const delta = computeDelta(priorApplied);
+        for (const [k, v] of Object.entries(delta)) current[k] = (current[k] ?? 0) - v;
       }
+
+      // Re-apply the doc's current effect, if it still exists and is confirmed.
+      let nextApplied: AppliedFields | null = null;
+      if (txnSnap.exists) {
+        const data = txnSnap.data() as {
+          needsConfirmation?: boolean; type?: string; amount?: number; category?: string | null;
+        };
+        if (!data.needsConfirmation && typeof data.amount === 'number'
+          && (data.type === 'EXPENSE' || data.type === 'ASSET')) {
+          const applied: AppliedFields = { type: data.type, amount: data.amount, category: data.category ?? null };
+          const delta = computeDelta(applied);
+          for (const [k, v] of Object.entries(delta)) current[k] = (current[k] ?? 0) + v;
+          nextApplied = applied;
+        }
+      }
+
+      if (!priorApplied && !nextApplied) return; // nothing to do
 
       // Negative balances are allowed (flagged in UI), never blocked here.
       const totalAssets = ASSET_FIELD_KEYS.reduce((sum, k) => sum + (current[k] ?? 0), 0);
@@ -116,6 +121,10 @@ export const updateNetWorth = functions
         lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
       }, { merge: true });
 
-      tx.update(change.after.ref, { appliedToNetWorth: true });
+      if (txnSnap.exists) {
+        tx.update(txnRef, {
+          appliedFields: nextApplied ?? admin.firestore.FieldValue.delete(),
+        });
+      }
     });
   });

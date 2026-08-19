@@ -2,10 +2,12 @@
 // Mirrors the Firestore schema written by functions/src/classifyTransaction.ts
 // and functions/src/updateNetWorth.ts — keep these three in sync.
 
-// Only two top-level types: money spent (EXPENSE) or money coming in / held
-// as an asset (ASSET). `category` picks the subcategory within whichever
-// type — see EXPENSE_CATEGORIES / ASSET_CATEGORIES below.
-export type TransactionType = 'ASSET' | 'EXPENSE';
+// Three top-level types: money spent (EXPENSE), money coming in / held as an
+// asset (ASSET), or anything that doesn't fit either (OTHER — e.g. lending
+// money, a note-to-self, an unclear entry). `category` picks the subcategory
+// within EXPENSE/ASSET — see EXPENSE_CATEGORIES / ASSET_CATEGORIES below.
+// OTHER has no subcategories and never affects net worth.
+export type TransactionType = 'ASSET' | 'EXPENSE' | 'OTHER';
 
 export type Emotion =
   | 'happy'

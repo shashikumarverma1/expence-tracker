@@ -27,10 +27,10 @@ import {
 
 type RouteParams = { ConfirmTransactionScreen: { audioUri?: string; transcript: string } };
 
-const TYPES: TransactionType[] = ['EXPENSE', 'ASSET'];
+const TYPES: TransactionType[] = ['EXPENSE', 'ASSET', 'OTHER'];
 
 const TYPE_LABEL: Record<TransactionType, string> = {
-  EXPENSE: 'Expense', ASSET: 'Asset',
+  EXPENSE: 'Expense', ASSET: 'Asset', OTHER: 'Other',
 };
 
 interface ClassifyResult {
@@ -173,12 +173,16 @@ export function ConfirmTransactionScreen() {
               style={styles2.input}
             />
 
-            <CText txt="Category" style={styles2.label} />
-            <View style={styles2.chipRow}>
-              {categoriesForType(type).map((c) => (
-                <Chip key={c} label={c} active={category === c} onPress={() => setCategory(c)} />
-              ))}
-            </View>
+            {categoriesForType(type).length > 0 && (
+              <>
+                <CText txt="Category" style={styles2.label} />
+                <View style={styles2.chipRow}>
+                  {categoriesForType(type).map((c) => (
+                    <Chip key={c} label={c} active={category === c} onPress={() => setCategory(c)} />
+                  ))}
+                </View>
+              </>
+            )}
 
             <CText txt="Emotion" style={styles2.label} />
             <View style={styles2.chipRow}>

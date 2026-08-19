@@ -44,8 +44,9 @@ const EMOTION_BG: Record<Emotion, string> = {
 };
 
 const TYPE_STYLE: Record<TransactionType, { bg: string; text: string; label: string; sign: '+' | '-' | '' }> = {
-  ASSET:   { bg: brandColors.greenBg, text: brandColors.greenText, label: '📈 Asset',   sign: '+' },
-  EXPENSE: { bg: brandColors.redBg,   text: brandColors.redText,   label: '🧾 Expense', sign: '-' },
+  ASSET:   { bg: brandColors.greenBg,  text: brandColors.greenText,  label: '📈 Asset',   sign: '+' },
+  EXPENSE: { bg: brandColors.redBg,    text: brandColors.redText,    label: '🧾 Expense', sign: '-' },
+  OTHER:   { bg: brandColors.purpleDim, text: brandColors.purple,    label: '📝 Other',   sign: '' },
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────
@@ -132,7 +133,7 @@ function NetWorthRing({ netWorth, colors }: { netWorth: NetWorth; colors: AppCol
             );
           })}
         </Svg>
-        <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 }}>
             <CText
               txt={`${netWorth.totalNetWorth < 0 ? '-' : ''}${formatAmount(netWorth.totalNetWorth)}`}
@@ -198,10 +199,10 @@ function MiniEntryCard({
         <View style={[s.resultChip, { backgroundColor: ts.bg }]}>
           <CText txt={ts.label} style={[s.resultTxt, { color: ts.text }]} />
         </View>
-        <View style={[s.pnlBadge, { backgroundColor: ts.sign === '+' ? brandColors.greenBg : brandColors.redBg }]}>
+        <View style={[s.pnlBadge, { backgroundColor: ts.sign === '+' ? brandColors.greenBg : ts.sign === '-' ? brandColors.redBg : brandColors.purpleDim }]}>
           <CText
             txt={`${ts.sign}${formatAmount(amount, currency)}`}
-            style={[s.pnlTxt, { color: ts.sign === '+' ? brandColors.greenText : brandColors.redText }]}
+            style={[s.pnlTxt, { color: ts.sign === '+' ? brandColors.greenText : ts.sign === '-' ? brandColors.redText : brandColors.purple }]}
           />
         </View>
         <CText txt={timeLabel} style={[s.entryTime, { color: colors.textMuted }]} />
@@ -433,7 +434,7 @@ export function HomeScreen() {
               currency={tx.currency}
               summary={tx.rawSummary}
               timeLabel={tx.createdAt ? formatTime(tx.createdAt) : ''}
-              onPress={goToPatterns}
+              onPress={() => nav.navigate('EditTransactionScreen', { transaction: tx })}
               colors={colors}
             />
           ))}

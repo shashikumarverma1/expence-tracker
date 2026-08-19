@@ -1,6 +1,7 @@
 export * from './homeScreen';
 export * from './RecordScreen';
 export * from './ConfirmTransactionScreen';
+export * from './EditTransactionScreen';
 export * from './NetWorthScreen';
 export * from './AssetClassDetailScreen';
 export * from './DashboardScreen';

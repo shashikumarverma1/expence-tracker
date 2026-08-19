@@ -33,7 +33,11 @@ export function AssetClassDetailScreen() {
   const s = makeStyles(colors);
 
   const renderItem = ({ item }: { item: Transaction }) => (
-    <View style={[s.row, { backgroundColor: colors.surface }, shadow.card]}>
+    <TouchableOpacity
+      activeOpacity={0.8}
+      onPress={() => nav.navigate('EditTransactionScreen', { transaction: item })}
+      style={[s.row, { backgroundColor: colors.surface }, shadow.card]}
+    >
       <View style={[s.iconWrap, { backgroundColor: brandColors.greenBg }]}>
         <Ionicons name="arrow-up" size={16} color={brandColors.greenText} />
       </View>
@@ -42,7 +46,7 @@ export function AssetClassDetailScreen() {
         <CText txt={formatDate(item.timestamp)} style={[s.meta, { color: colors.textMuted }]} />
       </View>
       <CText txt={`+${formatINR(item.amount)}`} style={[s.amount, { color: brandColors.greenText }]} />
-    </View>
+    </TouchableOpacity>
   );
 
   return (

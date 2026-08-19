@@ -65,8 +65,8 @@ service cloud.firestore {
     // updateDoc on the confirm screen.
     match /transactions/{transactionId} {
       allow read: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow update: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow create, delete: if false;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if false;
     }
 
     // Written only by the updateNetWorth trigger (admin SDK, bypasses rules) — the

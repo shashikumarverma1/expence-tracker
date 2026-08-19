@@ -1,5 +1,6 @@
 import {
   collection,
+  deleteDoc,
   doc,
   onSnapshot,
   orderBy,
@@ -69,4 +70,9 @@ export async function confirmTransaction(
     needsConfirmation: false,
     updatedAt: Timestamp.now(),
   });
+}
+
+/** Permanently removes a transaction; updateNetWorth reverses its effect. */
+export async function deleteTransaction(transactionId: string) {
+  return deleteDoc(doc(db, 'transactions', transactionId));
 }

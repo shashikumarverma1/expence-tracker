@@ -1,6 +1,6 @@
 import { createStackNavigator } from '@react-navigation/stack';
 import React from 'react';
-import { HomeScreen, SpendMoodScreen, ConfirmTransactionScreen, NetWorthScreen, AssetClassDetailScreen, DashboardScreen } from '../../features/home/screens';
+import { HomeScreen, SpendMoodScreen, ConfirmTransactionScreen, EditTransactionScreen, NetWorthScreen, AssetClassDetailScreen, DashboardScreen } from '../../features/home/screens';
 import { ProfileScreen } from '../../features/profile/screens/profileScreen';
 import SubscriptionScreen from '../../features/subscription/screens/SubscriptionScreen';
 import { PlanScreen } from '../../features/subscription/screens/PlanScreen';
@@ -12,6 +12,7 @@ export function HomeStack() {
     <Stack.Navigator screenOptions={{ animation: 'slide_from_right', headerShown: false }}>
       <Stack.Screen name="HomeScreen"        component={HomeScreen} />
       <Stack.Screen name="ConfirmTransactionScreen" component={ConfirmTransactionScreen} />
+      <Stack.Screen name="EditTransactionScreen" component={EditTransactionScreen} options={{ animation: 'slide_from_bottom' }} />
       <Stack.Screen name="DashboardScreen" component={DashboardScreen} />
       <Stack.Screen name="NetWorthScreen" component={NetWorthScreen} />
       <Stack.Screen name="AssetClassDetailScreen" component={AssetClassDetailScreen} />
