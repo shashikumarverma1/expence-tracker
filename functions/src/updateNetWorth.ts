@@ -28,9 +28,8 @@ const EMPTY_NET_WORTH: Record<string, number> = Object.fromEntries(
   [...ASSET_FIELD_KEYS, 'liabilities', 'totalAssets', 'totalNetWorth'].map((k) => [k, 0]),
 );
 
-// Every cash movement (expenses paid, income received, money moved into a
-// holding) is assumed to flow through the same liquid bucket now that fund
-// source is no longer tracked per-transaction.
+// Income (Salary, Freelance, …) and expenses settle here since fund source
+// isn't tracked per-transaction.
 const CASH_FIELD = 'digitalCash';
 
 /** Holding category -> net-worth field, or null if `category` is an income category. */
@@ -82,10 +81,11 @@ export const updateNetWorth = functions
         case 'ASSET': {
           const holding = holdingField(category);
           if (holding) {
-            // Holding category (Stocks, FD, …) — money moves out of cash/bank
-            // into that dedicated field.
+            // Holding category (Stocks, FD, …) — adds to that asset field.
+            // Not debited from cash: there's no tracked starting cash
+            // balance, so treating this as a cash-to-asset transfer would
+            // just drive digitalCash negative for every investment.
             current[holding] = (current[holding] ?? 0) + amount;
-            current[CASH_FIELD] = (current[CASH_FIELD] ?? 0) - amount;
           } else {
             // Income category (Salary, Freelance, …) — credits cash/bank directly.
             current[CASH_FIELD] = (current[CASH_FIELD] ?? 0) + amount;
