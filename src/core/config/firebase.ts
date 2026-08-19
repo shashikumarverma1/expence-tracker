@@ -3,6 +3,7 @@ import { getApps, getApp, initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { initializeAuth, getAuth, getReactNativePersistence , } from "firebase/auth";
 import { getStorage } from 'firebase/storage';
+import { getFunctions } from 'firebase/functions';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const firebaseConfig = {
@@ -19,6 +20,7 @@ const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
 export const db = getFirestore(app);
 export const fbStorage = getStorage(app);
+export const fbFunctions = getFunctions(app, 'asia-south1');
 let auth: ReturnType<typeof getAuth>;
 try {
   auth = initializeAuth(app, {

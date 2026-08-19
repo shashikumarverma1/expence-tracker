@@ -15,7 +15,9 @@ import { useTranslation } from 'react-i18next';
 import CText from '../../../core/component/CText';
 import { useTheme } from '../../../core/hook';
 import { AppColors, colors as brandColors, radius, shadow } from '../../../core/utils';
-import { useTradeLog, TradeEmotion, TradeResult } from '../hooks/useTradeLog';
+import { useTransactions } from '../hooks/useTransactions';
+import { useNetWorth } from '../hooks/useNetWorth';
+import { Emotion, TransactionType } from '../../../core/types/transaction';
 import { useIsPro } from '../../subscription/hooks/useIsPro';
 import { SubscriptionModal } from '../../subscription/screens/SubscriptionModal';
 import { getExpoPushToken, saveExpoPushToken } from '../../notification/hook/expoPushToken';
@@ -28,33 +30,34 @@ const TODAY_LABEL = new Date().toLocaleDateString('en-IN', {
   weekday: 'long', day: 'numeric', month: 'short',
 });
 
-const EMOTION_COLOR: Record<TradeEmotion, string> = {
-  Panic:   brandColors.red,
-  FOMO:    brandColors.amber,
-  Calm:    brandColors.green,
-  Revenge: brandColors.red,
+const EMOTION_COLOR: Record<Emotion, string> = {
+  happy: brandColors.green, neutral: brandColors.purple, guilty: brandColors.red,
+  stressed: brandColors.red, impulsive: brandColors.amber, proud: brandColors.green,
+  worried: brandColors.amber, excited: brandColors.green,
 };
 
-const EMOTION_BG: Record<TradeEmotion, string> = {
-  Panic:   brandColors.redBg,
-  FOMO:    brandColors.amberBg,
-  Calm:    brandColors.greenBg,
-  Revenge: brandColors.redBg,
+const EMOTION_BG: Record<Emotion, string> = {
+  happy: brandColors.greenBg, neutral: brandColors.purpleDim, guilty: brandColors.redBg,
+  stressed: brandColors.redBg, impulsive: brandColors.amberBg, proud: brandColors.greenBg,
+  worried: brandColors.amberBg, excited: brandColors.greenBg,
 };
 
-const RESULT_STYLE: Record<TradeResult, { bg: string; text: string; label: string }> = {
-  profit:     { bg: brandColors.greenBg,   text: brandColors.greenText,  label: '📈 Profit'   },
-  loss:       { bg: brandColors.redBg,     text: brandColors.redText,    label: '📉 Loss'     },
-  'no-trade': { bg: brandColors.purpleDim, text: brandColors.textMuted,  label: '➖ No Trade' },
+const TYPE_STYLE: Record<TransactionType, { bg: string; text: string; label: string; sign: '+' | '-' | '' }> = {
+  INCOME:           { bg: brandColors.greenBg,  text: brandColors.greenText, label: '💰 Income',   sign: '+' },
+  EXPENSE:          { bg: brandColors.redBg,    text: brandColors.redText,   label: '🧾 Expense',  sign: '-' },
+  ASSET_ADD:        { bg: brandColors.greenBg,  text: brandColors.greenText, label: '📈 Asset +',  sign: '+' },
+  ASSET_REDUCE:     { bg: brandColors.amberBg,  text: brandColors.amberText, label: '📉 Asset -',  sign: '-' },
+  LIABILITY_ADD:    { bg: brandColors.amberBg,  text: brandColors.amberText, label: '🏦 Debt +',   sign: '+' },
+  LIABILITY_REDUCE: { bg: brandColors.greenBg,  text: brandColors.greenText, label: '✅ Debt Paid', sign: '-' },
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────
 
 const CURRENCY_SYMBOL: Record<string, string> = { INR: '₹', USD: '$', EUR: '€', GBP: '£' };
 
-function formatPnl(pnl: number, currency = 'INR'): string {
+function formatAmount(amount: number, currency = 'INR'): string {
   const sym = CURRENCY_SYMBOL[currency] ?? '₹';
-  const abs = Math.abs(pnl);
+  const abs = Math.abs(amount);
   let str: string;
   if (currency === 'INR') {
     str = abs >= 100000
@@ -69,7 +72,7 @@ function formatPnl(pnl: number, currency = 'INR'): string {
       ? `${sym}${(abs / 1000).toFixed(abs % 1000 === 0 ? 0 : 1)}K`
       : `${sym}${abs}`;
   }
-  return pnl >= 0 ? `+${str}` : `-${str}`;
+  return str;
 }
 
 function formatTime(ms: number): string {
@@ -82,19 +85,20 @@ function formatTime(ms: number): string {
 // ─── Mini entry card ─────────────────────────────────────────────
 
 function MiniEntryCard({
-  emotion, result, pnl, currency, aiSummary, timeLabel, onPress, colors,
+  emotion, type, amount, currency, summary, timeLabel, onPress, colors,
 }: {
-  emotion:   TradeEmotion;
-  result:    TradeResult | null;
-  pnl?:      number | null;
+  emotion:   Emotion;
+  type:      TransactionType;
+  amount:    number;
   currency?: string;
-  aiSummary: string;
+  summary:   string;
   timeLabel: string;
   onPress:   () => void;
   colors:    AppColors;
 }) {
   const emotionColor = EMOTION_COLOR[emotion] ?? brandColors.purple;
   const emotionBg    = EMOTION_BG[emotion]    ?? brandColors.purpleDim;
+  const ts = TYPE_STYLE[type];
   const s = makeStyles(colors);
 
   return (
@@ -107,23 +111,19 @@ function MiniEntryCard({
         <View style={[s.emotionChip, { backgroundColor: emotionBg }]}>
           <CText txt={emotion} style={[s.emotionTxt, { color: emotionColor }]} />
         </View>
-        {result && (() => {
-          const rs = RESULT_STYLE[result];
-          return (
-            <View style={[s.resultChip, { backgroundColor: rs.bg }]}>
-              <CText txt={rs.label} style={[s.resultTxt, { color: rs.text }]} />
-            </View>
-          );
-        })()}
-        {pnl != null && (
-          <View style={[s.pnlBadge, { backgroundColor: pnl >= 0 ? brandColors.greenBg : brandColors.redBg }]}>
-            <CText txt={formatPnl(pnl, currency)} style={[s.pnlTxt, { color: pnl >= 0 ? brandColors.greenText : brandColors.redText }]} />
-          </View>
-        )}
+        <View style={[s.resultChip, { backgroundColor: ts.bg }]}>
+          <CText txt={ts.label} style={[s.resultTxt, { color: ts.text }]} />
+        </View>
+        <View style={[s.pnlBadge, { backgroundColor: ts.sign === '+' ? brandColors.greenBg : brandColors.redBg }]}>
+          <CText
+            txt={`${ts.sign}${formatAmount(amount, currency)}`}
+            style={[s.pnlTxt, { color: ts.sign === '+' ? brandColors.greenText : brandColors.redText }]}
+          />
+        </View>
         <CText txt={timeLabel} style={[s.entryTime, { color: colors.textMuted }]} />
       </View>
-      {!!aiSummary && (
-        <CText txt={aiSummary} style={[s.entrySummary, { color: colors.text }]} />
+      {!!summary && (
+        <CText txt={summary} style={[s.entrySummary, { color: colors.text }]} />
       )}
     </TouchableOpacity>
   );
@@ -139,7 +139,8 @@ export function HomeScreen() {
   const uid         = useAuthStore((s) => s.user?.uid);
   const { colors }  = useTheme();
   const { t }       = useTranslation();
-  const { trades }  = useTradeLog();
+  const { transactions } = useTransactions();
+  const { netWorth }     = useNetWorth();
   const isPro       = useIsPro();
   const [showPaywall, setShowPaywall] = useState(false);
   const [typeModal,   setTypeModal]   = useState(false);
@@ -160,10 +161,9 @@ export function HomeScreen() {
     })();
   }, []);
 
-  const latest3    = trades.slice(0, 3);
-  const todayCount = trades.filter((t) => {
-    const ms = t.createdAt?.toMillis?.() ?? 0;
-    const d  = new Date(ms);
+  const latest3    = transactions.slice(0, 3);
+  const todayCount = transactions.filter((tx) => {
+    const d  = new Date(tx.createdAt);
     const now = new Date();
     return d.getFullYear() === now.getFullYear()
       && d.getMonth()      === now.getMonth()
@@ -190,7 +190,7 @@ export function HomeScreen() {
   }, [pulse, pulseOpacity]);
 
   const FREE_LIMIT = 10;
-  const hitLimit   = !isPro && trades.length >= FREE_LIMIT;
+  const hitLimit   = !isPro && transactions.length >= FREE_LIMIT;
 
   const goToPatterns = () => nav.navigate('MainTabs', { screen: 'Patterns' });
 
@@ -201,7 +201,7 @@ export function HomeScreen() {
         {/* ── Header ── */}
         <View style={s.header}>
           <View>
-            <CText style={[s.appName, { color: colors.text }]}>TradeLog</CText>
+            <CText style={[s.appName, { color: colors.text }]}>SpendMood</CText>
             <CText style={[s.date,    { color: colors.textMuted }]}>{TODAY_LABEL}</CText>
           </View>
         </View>
@@ -211,24 +211,24 @@ export function HomeScreen() {
           <View style={[s.limitBanner, { backgroundColor: colors.primaryDim }]}>
             <Ionicons name="information-circle-outline" size={15} color={colors.primary} />
             <CText style={[s.limitTxt, { color: colors.primary }]}>
-              {trades.length < FREE_LIMIT
-                ? t('home_screen.free_limit', { count: FREE_LIMIT - trades.length })
+              {transactions.length < FREE_LIMIT
+                ? t('home_screen.free_limit', { count: FREE_LIMIT - transactions.length })
                 : t('home_screen.free_limit_reached')}
             </CText>
           </View>
         )}
 
-        {/* ── Stat card ── */}
+        {/* ── Net worth card ── */}
         <View style={[s.statCard, { backgroundColor: colors.surface }, shadow.card]}>
           <View style={[s.statIcon, { backgroundColor: colors.primaryDim }]}>
-            <Ionicons name="bar-chart-outline" size={22} color={colors.primary} />
+            <Ionicons name="wallet-outline" size={22} color={colors.primary} />
           </View>
           <View>
             <CText style={[s.statValue, { color: colors.text }]}>
-              {todayCount === 1 ? t('journal_list.count_one', { count: 1 }) : t('journal_list.count_other', { count: todayCount })}
+              {`${netWorth.totalNetWorth < 0 ? '-' : ''}₹${formatAmount(netWorth.totalNetWorth)}`}
             </CText>
             <CText style={[s.statLabel, { color: colors.textMuted }]}>
-              {t('journal_list.today').toLowerCase()}
+              net worth · {todayCount} {todayCount === 1 ? 'entry' : 'entries'} today
             </CText>
           </View>
         </View>
@@ -301,7 +301,7 @@ export function HomeScreen() {
                     const text = typedText.trim();
                     setTypeModal(false);
                     setTypedText('');
-                    nav.navigate('TradeEntryDetailScreen', { transcription: text });
+                    nav.navigate('ConfirmTransactionScreen', { transcript: text });
                   }}
                   style={[s.modalSubmit, { backgroundColor: colors.primary, opacity: typedText.trim() ? 1 : 0.4 }]}
                 >
@@ -330,18 +330,18 @@ export function HomeScreen() {
               <View style={[s.emptyIcon, { backgroundColor: colors.primaryDim }]}>
                 <Ionicons name="journal-outline" size={28} color={colors.primary} />
               </View>
-              <CText style={[s.emptyTitle, { color: colors.text }]} tx="home_screen.no_trades_title" />
-              <CText style={[s.emptySub, { color: colors.textMuted }]} tx="home_screen.no_trades_sub" />
+              <CText style={[s.emptyTitle, { color: colors.text }]} txt="No entries yet" />
+              <CText style={[s.emptySub, { color: colors.textMuted }]} txt="Tap the mic and say what happened with your money." />
             </View>
-          ) : latest3.map((t) => (
+          ) : latest3.map((tx) => (
             <MiniEntryCard
-              key={t.id}
-              emotion={t.emotion}
-              result={t.result ?? null}
-              pnl={t.pnl}
-              currency={t.currency}
-              aiSummary={t.aiSummary ?? ''}
-              timeLabel={t.createdAt ? formatTime(t.createdAt.toMillis()) : ''}
+              key={tx.id}
+              emotion={tx.emotion}
+              type={tx.type}
+              amount={tx.amount}
+              currency={tx.currency}
+              summary={tx.rawSummary}
+              timeLabel={tx.createdAt ? formatTime(tx.createdAt) : ''}
               onPress={goToPatterns}
               colors={colors}
             />

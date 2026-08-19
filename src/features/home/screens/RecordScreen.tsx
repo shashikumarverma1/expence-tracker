@@ -368,7 +368,7 @@ export function RecordScreen() {
 
   const handleContinue = () => {
     if (!transcript) return; // guard — button is already disabled, but safety-first
-    nav.navigate('TradeEntryDetailScreen', { audioUri });
+    nav.navigate('ConfirmTransactionScreen', { audioUri, transcript });
   };
 
   return (
