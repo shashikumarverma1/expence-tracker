@@ -1,0 +1,30 @@
+{
+  "cli": {
+    "version": ">= 18.4.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "node": "20.19.4",
+      "yarn": "1.22.22",
+      "channel": "development"
+    },
+    "preview": {
+      "distribution": "internal",
+      "node": "20.19.4",
+      "yarn": "1.22.22",
+      "channel": "preview"
+    },
+    "production": {
+      "autoIncrement": true,
+      "node": "20.19.4",
+      "yarn": "1.22.22",
+      "channel": "production"
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

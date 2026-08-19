@@ -1,0 +1,434 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useNavigation } from '@react-navigation/native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Animated,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import CText from '../../../core/component/CText';
+import { useTheme } from '../../../core/hook';
+import { AppColors, colors as brandColors, radius, shadow } from '../../../core/utils';
+import { useTradeLog, TradeEmotion, TradeResult } from '../hooks/useTradeLog';
+import { useIsPro } from '../../subscription/hooks/useIsPro';
+import { SubscriptionModal } from '../../subscription/screens/SubscriptionModal';
+import { getExpoPushToken, saveExpoPushToken } from '../../notification/hook/expoPushToken';
+import { useAuthStore } from '../../../core/store/auth/useAuthStore';
+import { storage } from '../../../core/config/mmkv';
+
+// ─── Config ──────────────────────────────────────────────────────
+
+const TODAY_LABEL = new Date().toLocaleDateString('en-IN', {
+  weekday: 'long', day: 'numeric', month: 'short',
+});
+
+const EMOTION_COLOR: Record<TradeEmotion, string> = {
+  Panic:   brandColors.red,
+  FOMO:    brandColors.amber,
+  Calm:    brandColors.green,
+  Revenge: brandColors.red,
+};
+
+const EMOTION_BG: Record<TradeEmotion, string> = {
+  Panic:   brandColors.redBg,
+  FOMO:    brandColors.amberBg,
+  Calm:    brandColors.greenBg,
+  Revenge: brandColors.redBg,
+};
+
+const RESULT_STYLE: Record<TradeResult, { bg: string; text: string; label: string }> = {
+  profit:     { bg: brandColors.greenBg,   text: brandColors.greenText,  label: '📈 Profit'   },
+  loss:       { bg: brandColors.redBg,     text: brandColors.redText,    label: '📉 Loss'     },
+  'no-trade': { bg: brandColors.purpleDim, text: brandColors.textMuted,  label: '➖ No Trade' },
+};
+
+// ─── Helpers ─────────────────────────────────────────────────────
+
+const CURRENCY_SYMBOL: Record<string, string> = { INR: '₹', USD: '$', EUR: '€', GBP: '£' };
+
+function formatPnl(pnl: number, currency = 'INR'): string {
+  const sym = CURRENCY_SYMBOL[currency] ?? '₹';
+  const abs = Math.abs(pnl);
+  let str: string;
+  if (currency === 'INR') {
+    str = abs >= 100000
+      ? `${sym}${(abs / 100000).toFixed(abs % 100000 === 0 ? 0 : 1)}L`
+      : abs >= 1000
+      ? `${sym}${(abs / 1000).toFixed(abs % 1000 === 0 ? 0 : 1)}K`
+      : `${sym}${abs}`;
+  } else {
+    str = abs >= 1000000
+      ? `${sym}${(abs / 1000000).toFixed(1)}M`
+      : abs >= 1000
+      ? `${sym}${(abs / 1000).toFixed(abs % 1000 === 0 ? 0 : 1)}K`
+      : `${sym}${abs}`;
+  }
+  return pnl >= 0 ? `+${str}` : `-${str}`;
+}
+
+function formatTime(ms: number): string {
+  const d = new Date(ms);
+  const h = d.getHours();
+  const m = String(d.getMinutes()).padStart(2, '0');
+  return `${h % 12 || 12}:${m} ${h >= 12 ? 'PM' : 'AM'}`;
+}
+
+// ─── Mini entry card ─────────────────────────────────────────────
+
+function MiniEntryCard({
+  emotion, result, pnl, currency, aiSummary, timeLabel, onPress, colors,
+}: {
+  emotion:   TradeEmotion;
+  result:    TradeResult | null;
+  pnl?:      number | null;
+  currency?: string;
+  aiSummary: string;
+  timeLabel: string;
+  onPress:   () => void;
+  colors:    AppColors;
+}) {
+  const emotionColor = EMOTION_COLOR[emotion] ?? brandColors.purple;
+  const emotionBg    = EMOTION_BG[emotion]    ?? brandColors.purpleDim;
+  const s = makeStyles(colors);
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.8}
+      style={[s.entryCard, { borderLeftColor: emotionColor }]}
+    >
+      <View style={s.entryTop}>
+        <View style={[s.emotionChip, { backgroundColor: emotionBg }]}>
+          <CText txt={emotion} style={[s.emotionTxt, { color: emotionColor }]} />
+        </View>
+        {result && (() => {
+          const rs = RESULT_STYLE[result];
+          return (
+            <View style={[s.resultChip, { backgroundColor: rs.bg }]}>
+              <CText txt={rs.label} style={[s.resultTxt, { color: rs.text }]} />
+            </View>
+          );
+        })()}
+        {pnl != null && (
+          <View style={[s.pnlBadge, { backgroundColor: pnl >= 0 ? brandColors.greenBg : brandColors.redBg }]}>
+            <CText txt={formatPnl(pnl, currency)} style={[s.pnlTxt, { color: pnl >= 0 ? brandColors.greenText : brandColors.redText }]} />
+          </View>
+        )}
+        <CText txt={timeLabel} style={[s.entryTime, { color: colors.textMuted }]} />
+      </View>
+      {!!aiSummary && (
+        <CText txt={aiSummary} style={[s.entrySummary, { color: colors.text }]} />
+      )}
+    </TouchableOpacity>
+  );
+}
+
+// ─── Screen ──────────────────────────────────────────────────────
+
+const BTN = 110;
+const RING = BTN + 32;
+
+export function HomeScreen() {
+  const nav         = useNavigation<any>();
+  const uid         = useAuthStore((s) => s.user?.uid);
+  const { colors }  = useTheme();
+  const { t }       = useTranslation();
+  const { trades }  = useTradeLog();
+  const isPro       = useIsPro();
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [typeModal,   setTypeModal]   = useState(false);
+  const [typedText,   setTypedText]   = useState('');
+
+  const s = makeStyles(colors);
+
+  // ── Ask notification permission once on first HomeScreen visit ──
+  useEffect(() => {
+    (async () => {
+      const asked = await storage.getAsync('notif_permission_asked');
+      if (asked) return;
+      await storage.set('notif_permission_asked', 'true');
+      try {
+        const token = await getExpoPushToken();
+        if (token && uid) await saveExpoPushToken(uid, token);
+      } catch {}
+    })();
+  }, []);
+
+  const latest3    = trades.slice(0, 3);
+  const todayCount = trades.filter((t) => {
+    const ms = t.createdAt?.toMillis?.() ?? 0;
+    const d  = new Date(ms);
+    const now = new Date();
+    return d.getFullYear() === now.getFullYear()
+      && d.getMonth()      === now.getMonth()
+      && d.getDate()       === now.getDate();
+  }).length;
+
+  // Pulsing ring animation
+  const pulse        = useRef(new Animated.Value(1)).current;
+  const pulseOpacity = useRef(new Animated.Value(0.6)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(pulse,        { toValue: 1.35, duration: 900, useNativeDriver: true }),
+          Animated.timing(pulseOpacity, { toValue: 0,    duration: 900, useNativeDriver: true }),
+        ]),
+        Animated.parallel([
+          Animated.timing(pulse,        { toValue: 1,   duration: 0, useNativeDriver: true }),
+          Animated.timing(pulseOpacity, { toValue: 0.6, duration: 0, useNativeDriver: true }),
+        ]),
+      ]),
+    ).start();
+  }, [pulse, pulseOpacity]);
+
+  const FREE_LIMIT = 10;
+  const hitLimit   = !isPro && trades.length >= FREE_LIMIT;
+
+  const goToPatterns = () => nav.navigate('MainTabs', { screen: 'Patterns' });
+
+  return (
+    <SafeAreaView style={[s.safe, { backgroundColor: colors.background }]}>
+      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+
+        {/* ── Header ── */}
+        <View style={s.header}>
+          <View>
+            <CText style={[s.appName, { color: colors.text }]}>TradeLog</CText>
+            <CText style={[s.date,    { color: colors.textMuted }]}>{TODAY_LABEL}</CText>
+          </View>
+        </View>
+
+        {/* ── Free limit banner ── */}
+        {!isPro && (
+          <View style={[s.limitBanner, { backgroundColor: colors.primaryDim }]}>
+            <Ionicons name="information-circle-outline" size={15} color={colors.primary} />
+            <CText style={[s.limitTxt, { color: colors.primary }]}>
+              {trades.length < FREE_LIMIT
+                ? t('home_screen.free_limit', { count: FREE_LIMIT - trades.length })
+                : t('home_screen.free_limit_reached')}
+            </CText>
+          </View>
+        )}
+
+        {/* ── Stat card ── */}
+        <View style={[s.statCard, { backgroundColor: colors.surface }, shadow.card]}>
+          <View style={[s.statIcon, { backgroundColor: colors.primaryDim }]}>
+            <Ionicons name="bar-chart-outline" size={22} color={colors.primary} />
+          </View>
+          <View>
+            <CText style={[s.statValue, { color: colors.text }]}>
+              {todayCount === 1 ? t('journal_list.count_one', { count: 1 }) : t('journal_list.count_other', { count: todayCount })}
+            </CText>
+            <CText style={[s.statLabel, { color: colors.textMuted }]}>
+              {t('journal_list.today').toLowerCase()}
+            </CText>
+          </View>
+        </View>
+
+        {/* ── Record button ── */}
+        <View style={s.recordArea}>
+          <View style={s.recordWrapper}>
+            <Animated.View
+              style={[
+                s.pulseRing,
+                { borderColor: colors.primary, transform: [{ scale: pulse }], opacity: pulseOpacity },
+              ]}
+            />
+            <TouchableOpacity
+              onPress={() => nav.navigate('RecordingScreen')}
+              activeOpacity={0.85}
+              style={[s.recordBtn, { backgroundColor: colors.primaryDim }, shadow.button]}
+            >
+              <Ionicons name="mic" size={44} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+
+          <CText style={[s.recordHint, { color: colors.textMuted }]} tx="record_btn.tap_to_record" />
+
+          <TouchableOpacity onPress={() => setTypeModal(true)} activeOpacity={0.7} hitSlop={10}>
+            <CText style={[s.typeLink, { color: colors.primary }]} tx="home_screen.type_instead" />
+          </TouchableOpacity>
+
+          {hitLimit && (
+            <TouchableOpacity
+              onPress={() => setShowPaywall(true)}
+              activeOpacity={0.85}
+              style={[s.upgradeBtn, { backgroundColor: colors.primary }, shadow.button]}
+            >
+              <CText style={[s.upgradeTxt, { color: '#fff' }]}>
+                {t('home_screen.free_limit_reached')}
+              </CText>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <SubscriptionModal visible={showPaywall} onClose={() => setShowPaywall(false)} />
+
+        {/* ── Type trade modal ── */}
+        <Modal visible={typeModal} transparent animationType="slide" onRequestClose={() => setTypeModal(false)}>
+          <View style={s.modalOverlay}>
+            <View style={[s.modalCard, { backgroundColor: colors.surface }]}>
+              <CText style={[s.modalTitle, { color: colors.text }]}>
+                {t('record_screen.title')}
+              </CText>
+              <CText style={[s.modalHint, { color: colors.textMuted }]}>
+                {t('record_screen.speak_freely')}
+              </CText>
+              <TextInput
+                style={[s.textInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
+                placeholder={t('record_screen.tap_to_start')}
+                placeholderTextColor={colors.textMuted}
+                multiline
+                value={typedText}
+                onChangeText={setTypedText}
+                autoFocus
+              />
+              <View style={s.modalBtns}>
+                <TouchableOpacity onPress={() => { setTypeModal(false); setTypedText(''); }} style={s.modalCancel}>
+                  <CText style={{ color: colors.textMuted, fontWeight: '600' }} tx="cancel" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  disabled={!typedText.trim()}
+                  onPress={() => {
+                    const text = typedText.trim();
+                    setTypeModal(false);
+                    setTypedText('');
+                    nav.navigate('TradeEntryDetailScreen', { transcription: text });
+                  }}
+                  style={[s.modalSubmit, { backgroundColor: colors.primary, opacity: typedText.trim() ? 1 : 0.4 }]}
+                >
+                  <CText style={{ color: '#fff', fontWeight: '700' }} tx="record_screen.continue" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* ── Recent entries ── */}
+        <View style={s.recentSection}>
+          <View style={s.recentHeader}>
+            <CText style={[s.recentTitle, { color: colors.textMuted }]}>
+              {t('recent_entries.title').toUpperCase()}
+            </CText>
+            {latest3.length > 0 && (
+              <TouchableOpacity onPress={goToPatterns} hitSlop={10}>
+                <CText style={[s.viewAll, { color: colors.primary }]} tx="recent_entries.see_all" />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {latest3.length === 0 ? (
+            <View style={s.emptyState}>
+              <View style={[s.emptyIcon, { backgroundColor: colors.primaryDim }]}>
+                <Ionicons name="journal-outline" size={28} color={colors.primary} />
+              </View>
+              <CText style={[s.emptyTitle, { color: colors.text }]} tx="home_screen.no_trades_title" />
+              <CText style={[s.emptySub, { color: colors.textMuted }]} tx="home_screen.no_trades_sub" />
+            </View>
+          ) : latest3.map((t) => (
+            <MiniEntryCard
+              key={t.id}
+              emotion={t.emotion}
+              result={t.result ?? null}
+              pnl={t.pnl}
+              currency={t.currency}
+              aiSummary={t.aiSummary ?? ''}
+              timeLabel={t.createdAt ? formatTime(t.createdAt.toMillis()) : ''}
+              onPress={goToPatterns}
+              colors={colors}
+            />
+          ))}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+// ─── Styles ──────────────────────────────────────────────────────
+
+const makeStyles = (colors: AppColors) => StyleSheet.create({
+  safe:   { flex: 1 },
+  scroll: { paddingBottom: 32 },
+
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 24, paddingTop: 8, paddingBottom: 20,
+  },
+  appName: { fontSize: 26, fontWeight: '700', letterSpacing: 0.3 },
+  date:    { fontSize: 13, marginTop: 2 },
+
+  limitBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    marginHorizontal: 24, marginBottom: 16,
+    paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.md,
+  },
+  limitTxt: { fontSize: 12, fontWeight: '600', flex: 1 },
+
+  statCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    marginHorizontal: 24, marginBottom: 28,
+    padding: 16, borderRadius: radius.lg,
+  },
+  statIcon:  { width: 48, height: 48, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+  statValue: { fontSize: 18, fontWeight: '700' },
+  statLabel: { fontSize: 13, marginTop: 1 },
+
+  recordArea:   { alignItems: 'center', gap: 20, paddingVertical: 28 },
+  recordWrapper:{ width: RING, height: RING, alignItems: 'center', justifyContent: 'center' },
+  pulseRing: {
+    position: 'absolute', width: RING, height: RING,
+    borderRadius: radius.full, borderWidth: 2,
+  },
+  recordBtn: {
+    width: BTN, height: BTN, borderRadius: radius.full,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  recordHint: { fontSize: 15, fontWeight: '500' },
+  typeLink:   { fontSize: 13, fontWeight: '600', marginTop: -10 },
+  upgradeBtn: { marginTop: 4, paddingHorizontal: 28, paddingVertical: 12, borderRadius: radius.xl },
+  upgradeTxt: { fontSize: 15, fontWeight: '700' },
+
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' },
+  modalCard:    { borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: 20, paddingBottom: 36 },
+  modalTitle:   { fontSize: 17, fontWeight: '700', marginBottom: 4 },
+  modalHint:    { fontSize: 13, lineHeight: 18, marginBottom: 14 },
+  textInput: {
+    borderWidth: 1, borderRadius: radius.md, padding: 12,
+    fontSize: 14, minHeight: 110, textAlignVertical: 'top', marginBottom: 16,
+  },
+  modalBtns:   { flexDirection: 'row', gap: 10, justifyContent: 'flex-end' },
+  modalCancel: { paddingHorizontal: 16, paddingVertical: 10 },
+  modalSubmit: { borderRadius: radius.md, paddingHorizontal: 20, paddingVertical: 10 },
+
+  emptyState:  { alignItems: 'center', paddingVertical: 28, gap: 8 },
+  emptyIcon:   { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
+  emptyTitle:  { fontSize: 15, fontWeight: '600' },
+  emptySub:    { fontSize: 13, textAlign: 'center', paddingHorizontal: 24 },
+  recentSection: { marginHorizontal: 20, marginTop: 4 },
+  recentHeader:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  recentTitle:   { fontSize: 11, fontWeight: '700', letterSpacing: 0.8 },
+  viewAll:       { fontSize: 13, fontWeight: '600' },
+
+  entryCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg, padding: 14, marginBottom: 10, borderLeftWidth: 3,
+    ...shadow.card,
+  },
+  entryTop:    { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
+  emotionChip: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 20 },
+  emotionTxt:  { fontSize: 11, fontWeight: '700' },
+  resultChip:  { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 20 },
+  resultTxt:   { fontSize: 11, fontWeight: '700' },
+  pnlBadge:    { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
+  pnlTxt:      { fontSize: 11, fontWeight: '700' },
+entryTime:   { marginLeft: 'auto', fontSize: 11 },
+  entrySummary:{ fontSize: 13, lineHeight: 19 },
+});

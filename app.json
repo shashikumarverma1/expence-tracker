@@ -1,0 +1,90 @@
+{
+  "expo": {
+    "name": "TradeLog",
+    "slug": "tradelog",
+    "version": "1.0.11",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0d1b2a"
+    },
+    "plugins": [
+      "@react-native-google-signin/google-signin",
+      "expo-localization",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0d1b2a",
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "imageWidth": 200
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "defaultChannel": "default",
+          "enableBackgroundRemoteNotifications": false
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "16.4"
+          }
+        }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "TradeLog needs microphone access to record your voice journal entries.",
+          "speechRecognitionPermission": "TradeLog uses speech recognition to transcribe your voice journal entries."
+        }
+      ]
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tradelog.app",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSMicrophoneUsageDescription": "TradeLog needs microphone access to record your voice journal entries.",
+        "NSSpeechRecognitionUsageDescription": "TradeLog uses speech recognition to transcribe your voice journal entries."
+      }
+    },
+    "android": {
+      "package": "com.tradelog.journal",
+      "versionCode": 2,
+      "softwareKeyboardLayoutMode": "resize",
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0d1b2a"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "42df1a4f-90ce-4e4d-ab36-dccce77fb958"
+      }
+    },
+    "owner": "shashikumarverma",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/2f519546-7baa-480c-a391-79e7bfe3dd9f"
+    }
+  }
+}

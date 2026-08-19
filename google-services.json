@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "443156738328",
+    "project_id": "tradelog-9be46",
+    "storage_bucket": "tradelog-9be46.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:443156738328:android:3f5b0faeee6955cdb02e6d",
+        "android_client_info": {
+          "package_name": "com.tradelog.journal"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "443156738328-9il41kd0ndh0b7os1a4gt02uudp3d6he.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBf-rR-ajY_A8-gSC8h9GEQOTw-TvuEYTc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "443156738328-9il41kd0ndh0b7os1a4gt02uudp3d6he.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
