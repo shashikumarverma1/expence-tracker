@@ -204,6 +204,13 @@ export function HomeScreen() {
             <CText style={[s.appName, { color: colors.text }]}>SpendMood</CText>
             <CText style={[s.date,    { color: colors.textMuted }]}>{TODAY_LABEL}</CText>
           </View>
+          <TouchableOpacity
+            onPress={() => nav.navigate('DashboardScreen')}
+            hitSlop={10}
+            style={[s.dashboardBtn, { backgroundColor: colors.primaryDim }]}
+          >
+            <Ionicons name="grid-outline" size={20} color={colors.primary} />
+          </TouchableOpacity>
         </View>
 
         {/* ── Free limit banner ── */}
@@ -369,6 +376,7 @@ const makeStyles = (colors: AppColors) => StyleSheet.create({
   },
   appName: { fontSize: 26, fontWeight: '700', letterSpacing: 0.3 },
   date:    { fontSize: 13, marginTop: 2 },
+  dashboardBtn: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
 
   limitBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
