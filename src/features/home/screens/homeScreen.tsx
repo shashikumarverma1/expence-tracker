@@ -12,12 +12,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import Svg, { Circle } from 'react-native-svg';
 import CText from '../../../core/component/CText';
 import { useTheme } from '../../../core/hook';
 import { AppColors, colors as brandColors, radius, shadow } from '../../../core/utils';
 import { useTransactions } from '../hooks/useTransactions';
 import { useNetWorth } from '../hooks/useNetWorth';
-import { Emotion, TransactionType } from '../../../core/types/transaction';
+import { Emotion, TransactionType, ASSET_FIELD_KEYS, NetWorth } from '../../../core/types/transaction';
 import { useIsPro } from '../../subscription/hooks/useIsPro';
 import { SubscriptionModal } from '../../subscription/screens/SubscriptionModal';
 import { getExpoPushToken, saveExpoPushToken } from '../../notification/hook/expoPushToken';
@@ -76,6 +77,82 @@ function formatTime(ms: number): string {
   const h = d.getHours();
   const m = String(d.getMinutes()).padStart(2, '0');
   return `${h % 12 || 12}:${m} ${h >= 12 ? 'PM' : 'AM'}`;
+}
+
+// ─── Net worth ring ──────────────────────────────────────────────
+
+const RING_PALETTE = [
+  brandColors.purple, brandColors.green, brandColors.amber, brandColors.blue,
+  brandColors.red, '#4DA3FF', '#FF8A65', '#8D6E63', '#26A69A', '#AB47BC', '#78909C',
+];
+
+const RING_LABEL: Record<string, string> = {
+  cash: 'Cash', digitalCash: 'Bank/Digital Cash', stocks: 'Stocks', bonds: 'Bonds',
+  fd: 'FD', rd: 'RD', mutualFunds: 'Mutual Funds', crypto: 'Crypto',
+  gold: 'Gold', realEstate: 'Real Estate', otherAssets: 'Other',
+};
+
+function NetWorthRing({ netWorth, colors }: { netWorth: NetWorth; colors: AppColors }) {
+  const size = 76;
+  const strokeWidth = 10;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+
+  const segments = ASSET_FIELD_KEYS
+    .map((key, i) => ({ key, value: netWorth[key], color: RING_PALETTE[i % RING_PALETTE.length] }))
+    .filter((r) => r.value > 0);
+  const total = segments.reduce((sum, r) => sum + r.value, 0);
+
+  let offset = 0;
+  const s = makeStyles(colors);
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      <View style={{ width: size, height: size }}>
+        <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+          <Circle
+            cx={size / 2} cy={size / 2} r={radius}
+            stroke={colors.border} strokeWidth={strokeWidth} fill="none"
+          />
+          {total > 0 && segments.map((seg) => {
+            const segLen = (seg.value / total) * circumference;
+            const dashArray = `${segLen} ${circumference - segLen}`;
+            const dashOffset = -offset;
+            offset += segLen;
+            return (
+              <Circle
+                key={seg.key}
+                cx={size / 2} cy={size / 2} r={radius}
+                stroke={seg.color} strokeWidth={strokeWidth} fill="none"
+                strokeDasharray={dashArray}
+                strokeDashoffset={dashOffset}
+                strokeLinecap="butt"
+                transform={`rotate(-90 ${size / 2} ${size / 2})`}
+              />
+            );
+          })}
+        </Svg>
+      </View>
+      <View style={{ marginLeft: 12, flex: 1 }}>
+        {segments.length === 0 ? (
+          <CText txt="No assets recorded yet" style={[s.statLabel, { color: colors.textMuted }]} />
+        ) : segments
+          .slice()
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 3)
+          .map((seg) => (
+            <View key={seg.key} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 3 }}>
+              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: seg.color, marginRight: 6 }} />
+              <CText
+                txt={`${RING_LABEL[seg.key] ?? seg.key} · ₹${formatAmount(seg.value)}`}
+                style={[s.statLabel, { color: colors.text, fontSize: 12 }]}
+                numberOfLines={1}
+              />
+            </View>
+          ))}
+      </View>
+    </View>
+  );
 }
 
 // ─── Mini entry card ─────────────────────────────────────────────
@@ -227,18 +304,18 @@ export function HomeScreen() {
           onPress={() => nav.navigate('NetWorthScreen')}
           style={[s.statCard, { backgroundColor: colors.surface }, shadow.card]}
         >
-          <View style={[s.statIcon, { backgroundColor: colors.primaryDim }]}>
-            <Ionicons name="wallet-outline" size={22} color={colors.primary} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <CText style={[s.statValue, { color: colors.text }]}>
+          <NetWorthRing netWorth={netWorth} colors={colors} />
+          <View style={{ alignItems: 'flex-end' }}>
+            <CText style={[s.statValue, { color: colors.text, fontSize: 18 }]}>
               {`${netWorth.totalNetWorth < 0 ? '-' : ''}₹${formatAmount(netWorth.totalNetWorth)}`}
             </CText>
-            <CText style={[s.statLabel, { color: colors.textMuted }]}>
-              net worth · {todayCount} {todayCount === 1 ? 'entry' : 'entries'} today
+            <CText style={[s.statLabel, { color: colors.textMuted, fontSize: 11 }]}>
+              net worth
+            </CText>
+            <CText style={[s.statLabel, { color: colors.textMuted, fontSize: 11 }]}>
+              {todayCount} {todayCount === 1 ? 'entry' : 'entries'} today
             </CText>
           </View>
-          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
         </TouchableOpacity>
 
         {/* ── Record button ── */}
