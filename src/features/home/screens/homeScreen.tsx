@@ -93,7 +93,13 @@ const RING_LABEL: Record<string, string> = {
   gold: 'Gold', realEstate: 'Real Estate', otherAssets: 'Other',
 };
 
-function NetWorthRing({ netWorth, colors }: { netWorth: NetWorth; colors: AppColors }) {
+function NetWorthRing({
+  netWorth, colors, onSelectAsset,
+}: {
+  netWorth: NetWorth;
+  colors: AppColors;
+  onSelectAsset: (assetClass: string, label: string) => void;
+}) {
   const size = 112;
   const strokeWidth = 12;
   const radius = (size - strokeWidth) / 2;
@@ -152,16 +158,24 @@ function NetWorthRing({ netWorth, colors }: { netWorth: NetWorth; colors: AppCol
           .slice()
           .sort((a, b) => b.value - a.value)
           .slice(0, 4)
-          .map((seg) => (
-            <View key={seg.key} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 5 }}>
-              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: seg.color, marginRight: 6 }} />
-              <CText
-                txt={`${RING_LABEL[seg.key] ?? seg.key} · ${formatAmount(seg.value)}`}
-                style={[s.statLabel, { color: colors.text, fontSize: 12 }]}
-                numberOfLines={1}
-              />
-            </View>
-          ))}
+          .map((seg) => {
+            const label = RING_LABEL[seg.key] ?? seg.key;
+            return (
+              <TouchableOpacity
+                key={seg.key}
+                onPress={() => onSelectAsset(label, label)}
+                activeOpacity={0.6}
+                style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 5 }}
+              >
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: seg.color, marginRight: 6 }} />
+                <CText
+                  txt={`${label} · ${formatAmount(seg.value)}`}
+                  style={[s.statLabel, { color: colors.text, fontSize: 12 }]}
+                  numberOfLines={1}
+                />
+              </TouchableOpacity>
+            );
+          })}
       </View>
     </View>
   );
@@ -316,7 +330,11 @@ export function HomeScreen() {
           onPress={() => nav.navigate('NetWorthScreen')}
           style={[s.statCard, { backgroundColor: colors.surface }, shadow.card]}
         >
-          <NetWorthRing netWorth={netWorth} colors={colors} />
+          <NetWorthRing
+            netWorth={netWorth}
+            colors={colors}
+            onSelectAsset={(assetClass, label) => nav.navigate('AssetClassDetailScreen', { assetClass, label })}
+          />
           <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
             <CText style={[s.statLabel, { color: colors.textMuted, fontSize: 11 }]}>
               {todayCount} {todayCount === 1 ? 'entry' : 'entries'} today
