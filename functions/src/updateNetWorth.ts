@@ -2,6 +2,9 @@ import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions/v1';
 import { db, REGION } from './config';
 
+// ASSET holding categories -> the net-worth field they live in. Categories not
+// listed here (Salary, Freelance, Business, Interest, Dividend, Gift, Bonus,
+// Refund) are income — they credit fundSource directly instead.
 const ASSET_FIELD_MAP: Record<string, string> = {
   'Cash': 'cash',
   'Bank/Digital Cash': 'digitalCash',
@@ -31,9 +34,10 @@ function fundField(fundSource: string | null | undefined): string {
   return ASSET_FIELD_MAP[fundSource ?? 'Bank/Digital Cash'] ?? 'digitalCash';
 }
 
-function assetField(assetClass: string | null | undefined): string | null {
-  if (!assetClass) return null;
-  return ASSET_FIELD_MAP[assetClass] ?? 'otherAssets';
+/** Holding category -> net-worth field, or null if `category` is an income category. */
+function holdingField(category: string | null | undefined): string | null {
+  if (!category) return null;
+  return ASSET_FIELD_MAP[category] ?? null;
 }
 
 /**
@@ -54,12 +58,12 @@ export const updateNetWorth = functions
     if (after.needsConfirmation) return; // still awaiting user confirmation
     if (after.appliedToNetWorth) return; // idempotency guard — already applied
 
-    const { userId, type, amount, fundSource, assetClass } = after as {
+    const { userId, type, amount, fundSource, category } = after as {
       userId: string;
       type: string;
       amount: number;
       fundSource: string | null;
-      assetClass: string | null;
+      category: string | null;
     };
 
     if (!userId || typeof amount !== 'number') return;
@@ -78,33 +82,19 @@ export const updateNetWorth = functions
           current[f] = (current[f] ?? 0) - amount;
           break;
         }
-        case 'INCOME': {
-          const f = fundField(fundSource);
-          current[f] = (current[f] ?? 0) + amount;
-          break;
-        }
-        case 'ASSET_ADD': {
-          const a = assetField(assetClass) ?? 'otherAssets';
-          const f = fundField(fundSource);
-          current[a] = (current[a] ?? 0) + amount;
-          current[f] = (current[f] ?? 0) - amount;
-          break;
-        }
-        case 'ASSET_REDUCE': {
-          const a = assetField(assetClass) ?? 'otherAssets';
-          const f = fundField(fundSource);
-          current[a] = (current[a] ?? 0) - amount;
-          current[f] = (current[f] ?? 0) + amount;
-          break;
-        }
-        case 'LIABILITY_ADD': {
-          current.liabilities = (current.liabilities ?? 0) + amount;
-          break;
-        }
-        case 'LIABILITY_REDUCE': {
-          current.liabilities = (current.liabilities ?? 0) - amount;
-          const f = fundField(fundSource);
-          current[f] = (current[f] ?? 0) - amount;
+        case 'ASSET': {
+          const holding = holdingField(category);
+          if (holding) {
+            // Holding category (Stocks, FD, …) — money moves out of cash/bank
+            // into that dedicated field.
+            const f = fundField(fundSource);
+            current[holding] = (current[holding] ?? 0) + amount;
+            current[f] = (current[f] ?? 0) - amount;
+          } else {
+            // Income category (Salary, Freelance, …) — credits fundSource directly.
+            const f = fundField(fundSource);
+            current[f] = (current[f] ?? 0) + amount;
+          }
           break;
         }
         default:

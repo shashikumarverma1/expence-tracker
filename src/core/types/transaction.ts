@@ -2,13 +2,10 @@
 // Mirrors the Firestore schema written by functions/src/classifyTransaction.ts
 // and functions/src/updateNetWorth.ts — keep these three in sync.
 
-export type TransactionType =
-  | 'INCOME'
-  | 'EXPENSE'
-  | 'ASSET_ADD'
-  | 'ASSET_REDUCE'
-  | 'LIABILITY_ADD'
-  | 'LIABILITY_REDUCE';
+// Only two top-level types: money spent (EXPENSE) or money coming in / held
+// as an asset (ASSET). `category` picks the subcategory within whichever
+// type — see EXPENSE_CATEGORIES / ASSET_CATEGORIES below.
+export type TransactionType = 'ASSET' | 'EXPENSE';
 
 export type Emotion =
   | 'happy'
@@ -28,25 +25,26 @@ export const EXPENSE_CATEGORIES = [
   'Rent', 'Subscriptions', 'Other',
 ] as const;
 
-export const INCOME_CATEGORIES = [
-  'Salary', 'Freelance', 'Business', 'Interest', 'Dividend',
-  'Gift', 'Bonus', 'Refund', 'Other',
+// ASSET categories split into two flavors that net worth treats differently
+// (see ASSET_FIELD_MAP): income categories land straight in cash/bank, while
+// holding categories move money out of cash/bank into that dedicated field.
+export const ASSET_INCOME_CATEGORIES = [
+  'Salary', 'Freelance', 'Business', 'Interest', 'Dividend', 'Gift', 'Bonus', 'Refund',
 ] as const;
 
-export const ASSET_CLASSES = [
+export const ASSET_HOLDING_CATEGORIES = [
   'Cash', 'Bank/Digital Cash', 'Stocks', 'Bonds', 'FD', 'RD',
   'Mutual Funds', 'Crypto', 'Gold', 'Real Estate', 'Other',
 ] as const;
 
-export const LIABILITY_TYPES = [
-  'Personal Loan', 'Home Loan', 'Credit Card', 'Borrowed from Person', 'Other',
-] as const;
+export const ASSET_CATEGORIES = [...ASSET_INCOME_CATEGORIES, ...ASSET_HOLDING_CATEGORIES] as const;
 
 export const EMOTIONS: Emotion[] = [
   'happy', 'neutral', 'guilty', 'stressed', 'impulsive', 'proud', 'worried', 'excited',
 ];
 
-// Maps a net-worth field key -> the human label used for fundSource / assetClass.
+// Maps an ASSET holding category -> the net-worth field it lives in. Income
+// categories (Salary, Freelance, …) aren't here — they credit fundSource directly.
 export const ASSET_FIELD_MAP: Record<string, keyof NetWorth> = {
   'Cash': 'cash',
   'Bank/Digital Cash': 'digitalCash',
@@ -68,6 +66,10 @@ export const ASSET_FIELD_KEYS = [
   'mutualFunds', 'crypto', 'gold', 'realEstate', 'otherAssets',
 ] as const;
 
+export function isIncomeCategory(category: string | null | undefined): boolean {
+  return !!category && (ASSET_INCOME_CATEGORIES as readonly string[]).includes(category);
+}
+
 export interface Transaction {
   id: string;
   userId: string;
@@ -75,8 +77,6 @@ export interface Transaction {
   amount: number;
   currency: string;
   category: string | null;
-  assetClass: string | null;
-  liabilityType: string | null;
   fundSource: string | null;
   merchantOrSource: string | null;
   emotion: Emotion;
@@ -109,7 +109,7 @@ export interface NetWorth {
 }
 
 export function categoriesForType(type: TransactionType): readonly string[] {
-  if (type === 'INCOME') return INCOME_CATEGORIES;
   if (type === 'EXPENSE') return EXPENSE_CATEGORIES;
+  if (type === 'ASSET') return ASSET_CATEGORIES;
   return [];
 }

@@ -20,8 +20,6 @@ import { fbFunctions } from '../../../core/config/firebase';
 import { confirmTransaction } from '../hooks/useTransactions';
 import {
   categoriesForType,
-  ASSET_CLASSES,
-  LIABILITY_TYPES,
   EMOTIONS,
   Emotion,
   TransactionType,
@@ -29,13 +27,10 @@ import {
 
 type RouteParams = { ConfirmTransactionScreen: { audioUri?: string; transcript: string } };
 
-const TYPES: TransactionType[] = [
-  'EXPENSE', 'INCOME', 'ASSET_ADD', 'ASSET_REDUCE', 'LIABILITY_ADD', 'LIABILITY_REDUCE',
-];
+const TYPES: TransactionType[] = ['EXPENSE', 'ASSET'];
 
 const TYPE_LABEL: Record<TransactionType, string> = {
-  EXPENSE: 'Expense', INCOME: 'Income', ASSET_ADD: 'Asset Added',
-  ASSET_REDUCE: 'Asset Sold/Withdrawn', LIABILITY_ADD: 'Debt Taken', LIABILITY_REDUCE: 'Debt Paid',
+  EXPENSE: 'Expense', ASSET: 'Asset',
 };
 
 const FUND_SOURCES = ['Bank/Digital Cash', 'Cash', 'Card', 'UPI', 'Other'];
@@ -46,8 +41,6 @@ interface ClassifyResult {
   amount: number;
   currency: string;
   category: string | null;
-  asset_class: string | null;
-  liability_type: string | null;
   fund_source: string | null;
   merchant_or_source: string | null;
   emotion: Emotion;
@@ -85,8 +78,6 @@ export function ConfirmTransactionScreen() {
   const [type, setType] = useState<TransactionType>('EXPENSE');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<string | null>(null);
-  const [assetClass, setAssetClass] = useState<string | null>(null);
-  const [liabilityType, setLiabilityType] = useState<string | null>(null);
   const [fundSource, setFundSource] = useState<string | null>('Bank/Digital Cash');
   const [merchant, setMerchant] = useState('');
   const [emotion, setEmotion] = useState<Emotion>('neutral');
@@ -103,10 +94,8 @@ export function ConfirmTransactionScreen() {
         const d = res.data;
         setDocId(d.id);
         setType(d.type);
-        setAmount(d.amount ? String(d.amount) : '');
+        setAmount(typeof d.amount === 'number' && !isNaN(d.amount) ? String(d.amount) : '');
         setCategory(d.category);
-        setAssetClass(d.asset_class);
-        setLiabilityType(d.liability_type);
         setFundSource(d.fund_source ?? 'Bank/Digital Cash');
         setMerchant(d.merchant_or_source ?? '');
         setEmotion(d.emotion ?? 'neutral');
@@ -120,10 +109,6 @@ export function ConfirmTransactionScreen() {
     })();
   }, [transcript]);
 
-  const isAsset = type === 'ASSET_ADD' || type === 'ASSET_REDUCE';
-  const isLiability = type === 'LIABILITY_ADD' || type === 'LIABILITY_REDUCE';
-  const needsFundSource = type === 'EXPENSE' || type === 'ASSET_ADD';
-
   const handleSave = async () => {
     const amt = parseFloat(amount);
     if (!docId || isNaN(amt) || amt <= 0) return;
@@ -133,10 +118,8 @@ export function ConfirmTransactionScreen() {
         type,
         amount: amt,
         currency: 'INR',
-        category: type === 'EXPENSE' || type === 'INCOME' ? category : null,
-        assetClass: isAsset ? assetClass : null,
-        liabilityType: isLiability ? liabilityType : null,
-        fundSource: needsFundSource ? fundSource : (type === 'LIABILITY_REDUCE' ? fundSource : null),
+        category,
+        fundSource,
         merchantOrSource: merchant || null,
         emotion,
         rawSummary,
@@ -181,7 +164,12 @@ export function ConfirmTransactionScreen() {
             <CText txt="Type" style={styles2.label} />
             <View style={styles2.chipRow}>
               {TYPES.map((tp) => (
-                <Chip key={tp} label={TYPE_LABEL[tp]} active={type === tp} onPress={() => setType(tp)} />
+                <Chip
+                  key={tp}
+                  label={TYPE_LABEL[tp]}
+                  active={type === tp}
+                  onPress={() => { setType(tp); setCategory(null); }}
+                />
               ))}
             </View>
 
@@ -195,49 +183,19 @@ export function ConfirmTransactionScreen() {
               style={styles2.input}
             />
 
-            {(type === 'EXPENSE' || type === 'INCOME') && (
-              <>
-                <CText txt="Category" style={styles2.label} />
-                <View style={styles2.chipRow}>
-                  {categoriesForType(type).map((c) => (
-                    <Chip key={c} label={c} active={category === c} onPress={() => setCategory(c)} />
-                  ))}
-                </View>
-              </>
-            )}
+            <CText txt="Category" style={styles2.label} />
+            <View style={styles2.chipRow}>
+              {categoriesForType(type).map((c) => (
+                <Chip key={c} label={c} active={category === c} onPress={() => setCategory(c)} />
+              ))}
+            </View>
 
-            {isAsset && (
-              <>
-                <CText txt="Asset Class" style={styles2.label} />
-                <View style={styles2.chipRow}>
-                  {ASSET_CLASSES.map((c) => (
-                    <Chip key={c} label={c} active={assetClass === c} onPress={() => setAssetClass(c)} />
-                  ))}
-                </View>
-              </>
-            )}
-
-            {isLiability && (
-              <>
-                <CText txt="Liability Type" style={styles2.label} />
-                <View style={styles2.chipRow}>
-                  {LIABILITY_TYPES.map((c) => (
-                    <Chip key={c} label={c} active={liabilityType === c} onPress={() => setLiabilityType(c)} />
-                  ))}
-                </View>
-              </>
-            )}
-
-            {(needsFundSource || type === 'LIABILITY_REDUCE' || type === 'ASSET_REDUCE') && (
-              <>
-                <CText txt="Fund Source" style={styles2.label} />
-                <View style={styles2.chipRow}>
-                  {FUND_SOURCES.map((c) => (
-                    <Chip key={c} label={c} active={fundSource === c} onPress={() => setFundSource(c)} />
-                  ))}
-                </View>
-              </>
-            )}
+            <CText txt="Fund Source" style={styles2.label} />
+            <View style={styles2.chipRow}>
+              {FUND_SOURCES.map((c) => (
+                <Chip key={c} label={c} active={fundSource === c} onPress={() => setFundSource(c)} />
+              ))}
+            </View>
 
             <CText txt="Emotion" style={styles2.label} />
             <View style={styles2.chipRow}>

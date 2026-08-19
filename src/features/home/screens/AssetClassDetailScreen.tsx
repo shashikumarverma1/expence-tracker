@@ -27,26 +27,23 @@ export function AssetClassDetailScreen() {
   const { assetClass, label } = route.params;
 
   const filtered = transactions.filter(
-    (tx) => (tx.type === 'ASSET_ADD' || tx.type === 'ASSET_REDUCE') && tx.assetClass === assetClass,
+    (tx) => tx.type === 'ASSET' && tx.category === assetClass,
   );
 
   const s = makeStyles(colors);
 
-  const renderItem = ({ item }: { item: Transaction }) => {
-    const isAdd = item.type === 'ASSET_ADD';
-    return (
-      <View style={[s.row, { backgroundColor: colors.surface }, shadow.card]}>
-        <View style={[s.iconWrap, { backgroundColor: isAdd ? brandColors.greenBg : brandColors.redBg }]}>
-          <Ionicons name={isAdd ? 'arrow-up' : 'arrow-down'} size={16} color={isAdd ? brandColors.greenText : brandColors.redText} />
-        </View>
-        <View style={s.mid}>
-          <CText txt={item.rawSummary || (isAdd ? 'Asset added' : 'Asset reduced')} style={[s.summary, { color: colors.text }]} numberOfLines={2} />
-          <CText txt={`${formatDate(item.timestamp)}${item.merchantOrSource ? ' · ' + item.merchantOrSource : ''}`} style={[s.meta, { color: colors.textMuted }]} />
-        </View>
-        <CText txt={`${isAdd ? '+' : '-'}${formatINR(item.amount)}`} style={[s.amount, { color: isAdd ? brandColors.greenText : brandColors.redText }]} />
+  const renderItem = ({ item }: { item: Transaction }) => (
+    <View style={[s.row, { backgroundColor: colors.surface }, shadow.card]}>
+      <View style={[s.iconWrap, { backgroundColor: brandColors.greenBg }]}>
+        <Ionicons name="arrow-up" size={16} color={brandColors.greenText} />
       </View>
-    );
-  };
+      <View style={s.mid}>
+        <CText txt={item.rawSummary || 'Asset added'} style={[s.summary, { color: colors.text }]} numberOfLines={2} />
+        <CText txt={`${formatDate(item.timestamp)}${item.merchantOrSource ? ' · ' + item.merchantOrSource : ''}`} style={[s.meta, { color: colors.textMuted }]} />
+      </View>
+      <CText txt={`+${formatINR(item.amount)}`} style={[s.amount, { color: brandColors.greenText }]} />
+    </View>
+  );
 
   return (
     <SafeAreaView style={s.safe}>

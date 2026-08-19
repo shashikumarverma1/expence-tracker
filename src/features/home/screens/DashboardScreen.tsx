@@ -8,7 +8,7 @@ import { useTheme } from '../../../core/hook';
 import { AppColors, colors as brandColors, radius, shadow } from '../../../core/utils';
 import { useTransactions } from '../hooks/useTransactions';
 import { useNetWorth } from '../hooks/useNetWorth';
-import { Emotion } from '../../../core/types/transaction';
+import { Emotion, isIncomeCategory } from '../../../core/types/transaction';
 
 const EMOTION_EMOJI: Record<Emotion, string> = {
   happy: '😊', neutral: '😐', guilty: '😔', stressed: '😰',
@@ -55,7 +55,7 @@ export function DashboardScreen() {
     const emotionOnExpense = new Map<Emotion, number>();
 
     for (const tx of thisMonth) {
-      if (tx.type === 'INCOME') totalIncome += tx.amount;
+      if (tx.type === 'ASSET' && isIncomeCategory(tx.category)) totalIncome += tx.amount;
       if (tx.type === 'EXPENSE') {
         totalExpense += tx.amount;
         expenseCount += 1;

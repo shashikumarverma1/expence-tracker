@@ -8,28 +8,20 @@ const SYSTEM_PROMPT = `You are a financial transaction classifier for a voice-ba
 
 ## TRANSACTION TYPES
 Classify into exactly one type:
-- "INCOME" — money coming in (salary, freelance payment, business income, interest, gift, bonus, refund)
 - "EXPENSE" — money spent on consumption (does not create a lasting asset)
-- "ASSET_ADD" — money converted into an asset (buying stocks, opening FD, adding to savings, buying gold, buying property, adding to mutual funds, crypto purchase)
-- "ASSET_REDUCE" — asset converted back to cash (selling stocks, breaking FD, selling property, crypto sale, withdrawing mutual funds)
-- "LIABILITY_ADD" — taking on debt (loan taken, credit card purchase on credit, borrowed money)
-- "LIABILITY_REDUCE" — paying off debt (loan EMI, credit card bill payment, repaying borrowed money)
+- "ASSET" — everything else: money coming in (salary, freelance payment, business income, interest, dividend, gift, bonus, refund) OR money held/moved into an asset (cash, bank balance, stocks, FD, RD, mutual funds, crypto, gold, real estate)
 
 ## CATEGORIES (choose based on type)
 
 For EXPENSE, category must be one of:
 Grocery, Food & Dining, Entertainment, Bills & Utilities, Travel & Transport, Shopping, Health & Medical, Education, Rent, Subscriptions, Other
 
-For INCOME, category must be one of:
-Salary, Freelance, Business, Interest, Dividend, Gift, Bonus, Refund, Other
+For ASSET, category must be one of:
+Salary, Freelance, Business, Interest, Dividend, Gift, Bonus, Refund, Cash, Bank/Digital Cash, Stocks, Bonds, FD, RD, Mutual Funds, Crypto, Gold, Real Estate, Other
 
-For ASSET_ADD / ASSET_REDUCE, asset_class must be one of:
-Cash, Bank/Digital Cash, Stocks, Bonds, FD, RD, Mutual Funds, Crypto, Gold, Real Estate, Other
+(The first eight — Salary..Refund — are money coming in. The rest are asset holdings being added to.)
 
-For LIABILITY_ADD / LIABILITY_REDUCE, liability_type must be one of:
-Personal Loan, Home Loan, Credit Card, Borrowed from Person, Other
-
-## FUND SOURCE (for EXPENSE and ASSET_ADD only)
+## FUND SOURCE
 Detect where the money came from/went to if mentioned (cash, bank, card, UPI, specific account). If not mentioned, default to "Bank/Digital Cash".
 
 ## EMOTION DETECTION
@@ -41,12 +33,10 @@ If no emotional signal is present, use "neutral".
 Respond ONLY with valid JSON. No markdown, no backticks, no preamble, no explanation. Exact schema:
 
 {
-  "type": "INCOME | EXPENSE | ASSET_ADD | ASSET_REDUCE | LIABILITY_ADD | LIABILITY_REDUCE",
+  "type": "EXPENSE | ASSET",
   "amount": number,
   "currency": "INR" (default, or detected currency),
-  "category": "string (null if type is ASSET_* or LIABILITY_*)",
-  "asset_class": "string (null unless type is ASSET_ADD or ASSET_REDUCE)",
-  "liability_type": "string (null unless type is LIABILITY_ADD or LIABILITY_REDUCE)",
+  "category": "string — one of the categories listed above for the chosen type",
   "fund_source": "string (Cash | Bank/Digital Cash | Card | UPI | Other, null if not applicable)",
   "merchant_or_source": "string — who was paid or who paid (e.g. 'Swiggy', 'Company', 'Broker', null if unclear)",
   "emotion": "string from emotion list",
@@ -56,39 +46,37 @@ Respond ONLY with valid JSON. No markdown, no backticks, no preamble, no explana
 
 ## CONFIDENCE RULES
 - confidence >= 0.85: classification is clear and unambiguous
-- confidence 0.5–0.84: type is clear but category/asset_class is a best guess
+- confidence 0.5–0.84: type is clear but category is a best guess
 - confidence < 0.5: transaction type itself is ambiguous or amount is missing/unclear
 
 ## EXAMPLES
 
 Input: "maine 50000 salary mili is mahine"
-Output: {"type":"INCOME","amount":50000,"currency":"INR","category":"Salary","asset_class":null,"liability_type":null,"fund_source":null,"merchant_or_source":"Employer","emotion":"happy","confidence":0.95,"raw_summary":"Received monthly salary of 50000"}
+Output: {"type":"ASSET","amount":50000,"currency":"INR","category":"Salary","fund_source":"Bank/Digital Cash","merchant_or_source":"Employer","emotion":"happy","confidence":0.95,"raw_summary":"Received monthly salary of 50000"}
 
 Input: "50 rupaye ka doodh liya"
-Output: {"type":"EXPENSE","amount":50,"currency":"INR","category":"Grocery","asset_class":null,"liability_type":null,"fund_source":"Bank/Digital Cash","merchant_or_source":null,"emotion":"neutral","confidence":0.9,"raw_summary":"Bought milk for 50 rupees"}
+Output: {"type":"EXPENSE","amount":50,"currency":"INR","category":"Grocery","fund_source":"Bank/Digital Cash","merchant_or_source":null,"emotion":"neutral","confidence":0.9,"raw_summary":"Bought milk for 50 rupees"}
+
+Input: "5 rupee ka milk liya"
+Output: {"type":"EXPENSE","amount":5,"currency":"INR","category":"Grocery","fund_source":"Bank/Digital Cash","merchant_or_source":null,"emotion":"neutral","confidence":0.9,"raw_summary":"Bought milk for 5 rupees"}
 
 Input: "5000 ka stock khareeda Zerodha se"
-Output: {"type":"ASSET_ADD","amount":5000,"currency":"INR","category":null,"asset_class":"Stocks","liability_type":null,"fund_source":"Bank/Digital Cash","merchant_or_source":"Zerodha","emotion":"neutral","confidence":0.92,"raw_summary":"Bought stocks worth 5000 via Zerodha"}
-
-Input: "meri FD tod di 20000 ki"
-Output: {"type":"ASSET_REDUCE","amount":20000,"currency":"INR","category":null,"asset_class":"FD","liability_type":null,"fund_source":null,"merchant_or_source":null,"emotion":"neutral","confidence":0.9,"raw_summary":"Broke FD worth 20000"}
+Output: {"type":"ASSET","amount":5000,"currency":"INR","category":"Stocks","fund_source":"Bank/Digital Cash","merchant_or_source":"Zerodha","emotion":"neutral","confidence":0.92,"raw_summary":"Bought stocks worth 5000 via Zerodha"}
 
 Input: "stressed tha to 2000 ka online shopping kar liya"
-Output: {"type":"EXPENSE","amount":2000,"currency":"INR","category":"Shopping","asset_class":null,"liability_type":null,"fund_source":"Bank/Digital Cash","merchant_or_source":null,"emotion":"stressed","confidence":0.88,"raw_summary":"Impulsive online shopping while stressed"}
+Output: {"type":"EXPENSE","amount":2000,"currency":"INR","category":"Shopping","fund_source":"Bank/Digital Cash","merchant_or_source":null,"emotion":"stressed","confidence":0.88,"raw_summary":"Impulsive online shopping while stressed"}
 
 Input: "kuch kharch kiya aaj"
-Output: {"type":"EXPENSE","amount":0,"currency":"INR","category":"Other","asset_class":null,"liability_type":null,"fund_source":null,"merchant_or_source":null,"emotion":"neutral","confidence":0.2,"raw_summary":"Unclear expense mentioned, amount missing"}
+Output: {"type":"EXPENSE","amount":0,"currency":"INR","category":"Other","fund_source":null,"merchant_or_source":null,"emotion":"neutral","confidence":0.2,"raw_summary":"Unclear expense mentioned, amount missing"}
 
-Input: "10000 credit card se bill pay kiya"
-Output: {"type":"LIABILITY_REDUCE","amount":10000,"currency":"INR","category":null,"asset_class":null,"liability_type":"Credit Card","fund_source":"Bank/Digital Cash","merchant_or_source":null,"emotion":"neutral","confidence":0.9,"raw_summary":"Paid credit card bill of 10000"}`;
+Input: "20000 FD me dala"
+Output: {"type":"ASSET","amount":20000,"currency":"INR","category":"FD","fund_source":"Bank/Digital Cash","merchant_or_source":null,"emotion":"neutral","confidence":0.9,"raw_summary":"Put 20000 into an FD"}`;
 
 interface ClassifiedFields {
   type: string;
   amount: number;
   currency: string;
   category: string | null;
-  asset_class: string | null;
-  liability_type: string | null;
   fund_source: string | null;
   merchant_or_source: string | null;
   emotion: string;
@@ -181,8 +169,6 @@ export const classifyTransaction = functions
       amount: 0,
       currency: 'INR',
       category: 'Other',
-      asset_class: null,
-      liability_type: null,
       fund_source: null,
       merchant_or_source: null,
       emotion: 'neutral',
@@ -199,8 +185,6 @@ export const classifyTransaction = functions
       amount: fields.amount,
       currency: fields.currency ?? 'INR',
       category: fields.category ?? null,
-      assetClass: fields.asset_class ?? null,
-      liabilityType: fields.liability_type ?? null,
       fundSource: fields.fund_source ?? null,
       merchantOrSource: fields.merchant_or_source ?? null,
       emotion: fields.emotion ?? 'neutral',

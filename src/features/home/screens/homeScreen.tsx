@@ -43,12 +43,8 @@ const EMOTION_BG: Record<Emotion, string> = {
 };
 
 const TYPE_STYLE: Record<TransactionType, { bg: string; text: string; label: string; sign: '+' | '-' | '' }> = {
-  INCOME:           { bg: brandColors.greenBg,  text: brandColors.greenText, label: '💰 Income',   sign: '+' },
-  EXPENSE:          { bg: brandColors.redBg,    text: brandColors.redText,   label: '🧾 Expense',  sign: '-' },
-  ASSET_ADD:        { bg: brandColors.greenBg,  text: brandColors.greenText, label: '📈 Asset +',  sign: '+' },
-  ASSET_REDUCE:     { bg: brandColors.amberBg,  text: brandColors.amberText, label: '📉 Asset -',  sign: '-' },
-  LIABILITY_ADD:    { bg: brandColors.amberBg,  text: brandColors.amberText, label: '🏦 Debt +',   sign: '+' },
-  LIABILITY_REDUCE: { bg: brandColors.greenBg,  text: brandColors.greenText, label: '✅ Debt Paid', sign: '-' },
+  ASSET:   { bg: brandColors.greenBg, text: brandColors.greenText, label: '📈 Asset',   sign: '+' },
+  EXPENSE: { bg: brandColors.redBg,   text: brandColors.redText,   label: '🧾 Expense', sign: '-' },
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────
