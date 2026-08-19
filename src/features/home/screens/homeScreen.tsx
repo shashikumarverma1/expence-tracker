@@ -219,11 +219,15 @@ export function HomeScreen() {
         )}
 
         {/* ── Net worth card ── */}
-        <View style={[s.statCard, { backgroundColor: colors.surface }, shadow.card]}>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => nav.navigate('NetWorthScreen')}
+          style={[s.statCard, { backgroundColor: colors.surface }, shadow.card]}
+        >
           <View style={[s.statIcon, { backgroundColor: colors.primaryDim }]}>
             <Ionicons name="wallet-outline" size={22} color={colors.primary} />
           </View>
-          <View>
+          <View style={{ flex: 1 }}>
             <CText style={[s.statValue, { color: colors.text }]}>
               {`${netWorth.totalNetWorth < 0 ? '-' : ''}₹${formatAmount(netWorth.totalNetWorth)}`}
             </CText>
@@ -231,7 +235,8 @@ export function HomeScreen() {
               net worth · {todayCount} {todayCount === 1 ? 'entry' : 'entries'} today
             </CText>
           </View>
-        </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+        </TouchableOpacity>
 
         {/* ── Record button ── */}
         <View style={s.recordArea}>
