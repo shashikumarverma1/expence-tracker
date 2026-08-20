@@ -189,7 +189,7 @@
   },
 
   "record_screen": {
-    "title": "Log Trade",
+    "title": "Log Entry",
     "discard_title": "Discard this recording?",
     "discard_recording": "Your recording will be lost.",
     "discard_transcript": "Your transcript will be lost.",
@@ -198,12 +198,12 @@
     "tap_to_start": "Tap to start recording",
     "recording": "Recording…",
     "processing": "Processing…",
-    "speak_freely": "Talk about your trade. AI will understand.",
+    "speak_freely": "Talk about what happened with your money. AI will understand.",
     "tap_to_stop": "Tap to stop",
     "your_words": "Your words:",
     "edit": "Edit",
     "done": "Done",
-    "tips": "Speak for 30+ seconds to unlock deeper AI insights about your trading psychology",
+    "tips": "Speak for 30+ seconds to unlock deeper AI insights about your spending habits",
     "live_preview": "Live preview",
     "preview_recording": "Preview recording",
     "preparing_audio": "Preparing audio…",
@@ -211,7 +211,7 @@
     "re_record": "Re-record",
     "continue": "Continue →",
     "mic_needed_title": "Microphone access needed",
-    "mic_needed_sub": "Please enable microphone access in Settings to record your trades.",
+    "mic_needed_sub": "Please enable microphone access in Settings to record your entries.",
     "open_settings": "Open Settings"
   },
 
@@ -299,7 +299,7 @@
     "next": "Next",
     "continue": "Continue",
     "get_started": "Get Started",
-    "welcome_title": "Welcome to TradeLog",
+    "welcome_title": "Welcome to Money Flow",
     "market_question": "What do you trade?",
     "market_sub": "Pick your primary market",
     "broker_step": "Step 2 of 2",
@@ -312,7 +312,7 @@
     "slide2_sub": "AI finds emotional patterns\nfrom your last 5 trades.",
     "slide3_title": "Trade Smarter",
     "slide3_sub": "Track P&L, emotions, and\nresults in one place.",
-    "paywall_title": "Unlock full TradeLog",
+    "paywall_title": "Unlock full Money Flow",
     "paywall_sub": "Unlimited trades, AI pattern reports, and detailed psychology insights.",
     "paywall_see_plans": "See Plans",
     "paywall_free": "Continue free (10 trades)"
@@ -420,7 +420,7 @@
 
   "subscription": {
     "title": "Upgrade to Pro",
-    "subtitle": "Unlock the full TradeLog experience",
+    "subtitle": "Unlock the full Money Flow experience",
     "toggle_subscribe": "Subscribe",
     "toggle_buy_once": "Buy Once",
     "btn_subscribe": "Subscribe for {{price}}",
@@ -433,7 +433,7 @@
     "no_offerings_msg": "Unable to load subscription plans. Please try again later.",
     "success_title": "You're all set! 🎉",
     "success_subscription": "Your subscription is now active. Enjoy all Pro features!",
-    "success_one_time": "Purchase complete. Enjoy your TradeLog upgrade!",
+    "success_one_time": "Purchase complete. Enjoy your Money Flow upgrade!",
     "purchase_failed": "Purchase Failed",
     "restore_title": "Purchases Restored",
     "restore_success": "Your purchases have been restored successfully.",

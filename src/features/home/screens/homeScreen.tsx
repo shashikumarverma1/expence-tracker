@@ -78,7 +78,7 @@ function NetWorthRing({
   const s = makeStyles(colors);
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+    <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
       <View style={{ width: size, height: size }}>
         <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
           <Circle
@@ -106,12 +106,12 @@ function NetWorthRing({
         <View style={StyleSheet.absoluteFill} pointerEvents="none">
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 }}>
             <CText
-              txt={`${netWorth.totalAssets < 0 ? '-' : ''}${formatAmount(netWorth.totalAssets)}`}
+              txt={`${netWorth.totalNetWorth < 0 ? '-' : ''}${formatAmount(netWorth.totalNetWorth)}`}
               style={[s.statValue, { color: colors.text, fontSize: 15 }]}
               numberOfLines={1}
               adjustsFontSizeToFit
             />
-            <CText txt="total value" style={[s.statLabel, { color: colors.textMuted, fontSize: 10 }]} />
+            <CText txt="net worth" style={[s.statLabel, { color: colors.textMuted, fontSize: 10 }]} />
           </View>
         </View>
       </View>
@@ -140,9 +140,9 @@ function NetWorthRing({
               </TouchableOpacity>
             );
           })}
-        {/* Loan money is included in "total value" above and drawn as its
-            own red slice in the ring — it's real cash you have, but it's
-            still owed, so it's flagged here too. */}
+        {/* Loan money still shows as its own red slice in the ring (it's
+            cash you have), but the center total above is true net worth
+            (assets minus this), matching Dashboard/Net Worth screens. */}
         {loanSegment && (
           <TouchableOpacity
             onPress={() => onSelectAsset('Loan', 'Loan')}
@@ -341,14 +341,6 @@ export function HomeScreen() {
     }
   };
 
-  const todayCount = transactions.filter((tx) => {
-    const d  = new Date(tx.createdAt);
-    const now = new Date();
-    return d.getFullYear() === now.getFullYear()
-      && d.getMonth()      === now.getMonth()
-      && d.getDate()       === now.getDate();
-  }).length;
-
   // Pulsing ring animation
   const pulse        = useRef(new Animated.Value(1)).current;
   const pulseOpacity = useRef(new Animated.Value(0.6)).current;
@@ -379,7 +371,7 @@ export function HomeScreen() {
         {/* ── Header ── */}
         <View style={s.header}>
           <View>
-            <CText style={[s.appName, { color: colors.text }]}>SpendMood</CText>
+            <CText style={[s.appName, { color: colors.text }]}>Money Flow</CText>
             <CText style={[s.date,    { color: colors.textMuted }]}>{TODAY_LABEL}</CText>
           </View>
           <TouchableOpacity
@@ -415,10 +407,7 @@ export function HomeScreen() {
             onSelectAsset={(assetClass, label) => nav.navigate('AssetClassDetailScreen', { assetClass, label })}
           />
           <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
-            <CText style={[s.statLabel, { color: colors.textMuted, fontSize: 11 }]}>
-              {todayCount} {todayCount === 1 ? 'entry' : 'entries'} today
-            </CText>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} style={{ marginTop: 4 }} />
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
           </View>
         </TouchableOpacity>
 

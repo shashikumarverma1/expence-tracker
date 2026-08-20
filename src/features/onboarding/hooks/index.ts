@@ -1,1 +1,1 @@
-// no hooks — onboarding logic lives in TradeLogOnboardingScreen
+// no hooks — onboarding logic lives in MoneyFlowIntroScreen

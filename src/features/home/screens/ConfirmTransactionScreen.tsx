@@ -73,6 +73,7 @@ export function ConfirmTransactionScreen() {
 
   const [type, setType] = useState<TransactionType>('EXPENSE');
   const [amount, setAmount] = useState('');
+  const [currency, setCurrency] = useState('INR');
   const [category, setCategory] = useState<string | null>(null);
   const [emotion, setEmotion] = useState<Emotion>('neutral');
   const [rawSummary, setRawSummary] = useState('');
@@ -89,6 +90,7 @@ export function ConfirmTransactionScreen() {
         setDocId(d.id);
         setType(d.type);
         setAmount(typeof d.amount === 'number' && !isNaN(d.amount) ? String(d.amount) : '');
+        setCurrency(d.currency || 'INR');
         setCategory(d.category);
         setEmotion(d.emotion ?? 'neutral');
         setRawSummary(d.raw_summary ?? '');
@@ -109,7 +111,7 @@ export function ConfirmTransactionScreen() {
       await confirmTransaction(docId, {
         type,
         amount: amt,
-        currency: 'INR',
+        currency,
         category,
         emotion,
         rawSummary,

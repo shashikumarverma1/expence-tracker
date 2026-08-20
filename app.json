@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "TradeLog",
+    "name": "Money Flow",
     "slug": "tradelog",
     "version": "1.0.11",
     "orientation": "portrait",
@@ -42,8 +42,8 @@
       [
         "expo-speech-recognition",
         {
-          "microphonePermission": "TradeLog needs microphone access to record your voice journal entries.",
-          "speechRecognitionPermission": "TradeLog uses speech recognition to transcribe your voice journal entries."
+          "microphonePermission": "Money Flow needs microphone access to record your voice journal entries.",
+          "speechRecognitionPermission": "Money Flow uses speech recognition to transcribe your voice journal entries."
         }
       ]
     ],
@@ -53,8 +53,8 @@
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSMicrophoneUsageDescription": "TradeLog needs microphone access to record your voice journal entries.",
-        "NSSpeechRecognitionUsageDescription": "TradeLog uses speech recognition to transcribe your voice journal entries."
+        "NSMicrophoneUsageDescription": "Money Flow needs microphone access to record your voice journal entries.",
+        "NSSpeechRecognitionUsageDescription": "Money Flow uses speech recognition to transcribe your voice journal entries."
       }
     },
     "android": {

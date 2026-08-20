@@ -1,1 +1,1 @@
-export * from './SpendMoodOnboardingScreen';
+export * from './MoneyFlowIntroScreen';
