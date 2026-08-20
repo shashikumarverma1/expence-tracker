@@ -14,9 +14,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CText from '../../../core/component/CText';
-import { useTheme } from '../../../core/hook';
+import { useTheme, useFirebaseStorage } from '../../../core/hook';
 import { AppColors, colors as brandColors, radius } from '../../../core/utils';
-import { fbFunctions } from '../../../core/config/firebase';
+import { fbFunctions, auth } from '../../../core/config/firebase';
 import { confirmTransaction } from '../hooks/useTransactions';
 import {
   categoriesForType,
@@ -27,7 +27,7 @@ import {
 
 type RouteParams = { ConfirmTransactionScreen: { audioUri?: string; transcript: string } };
 
-const TYPES: TransactionType[] = ['EXPENSE', 'INCOME', 'ASSET', 'OTHER'];
+const TYPES: TransactionType[] = ['EXPENSE', 'INCOME', 'ASSET'];
 
 const TYPE_LABEL: Record<TransactionType, string> = {
   EXPENSE: 'Expense', INCOME: 'Income', ASSET: 'Asset', OTHER: 'Other',
@@ -67,6 +67,7 @@ export function ConfirmTransactionScreen() {
   const route = useRoute<RouteProp<RouteParams, 'ConfirmTransactionScreen'>>();
   const { colors } = useTheme();
   const { transcript, audioUri } = route.params;
+  const { uploadImage } = useFirebaseStorage();
 
   const [isClassifying, setIsClassifying] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -84,10 +85,27 @@ export function ConfirmTransactionScreen() {
   useEffect(() => {
     (async () => {
       try {
+        // Upload the recording (if any) before classifying, so it's linked
+        // on the transaction doc for playback later — best-effort, a failed
+        // upload shouldn't block classification/saving the entry.
+        let audioUrl: string | null = null;
+        if (audioUri) {
+          const uid = auth.currentUser?.uid;
+          if (uid) {
+            const ext = audioUri.split('.').pop()?.split('?')[0] || 'm4a';
+            audioUrl = await uploadImage(
+              audioUri,
+              `voiceRecordings/${uid}/${Date.now()}.${ext}`,
+              undefined,
+              'audio/m4a',
+            );
+          }
+        }
+
         const classify = httpsCallable<{ transcript: string; audioUrl: string | null }, ClassifyResult>(
           fbFunctions, 'classifyTransaction',
         );
-        const res = await classify({ transcript, audioUrl: null });
+        const res = await classify({ transcript, audioUrl });
         const d = res.data;
         setDocId(d.id);
         setType(d.type);
@@ -118,7 +136,11 @@ export function ConfirmTransactionScreen() {
         emotion,
         rawSummary,
       });
-      nav.navigate('HomeScreen');
+      // This screen lives in the root stack (sibling to the tab navigator),
+      // not inside HomeStack — 'HomeScreen' isn't a route at this level.
+      // Navigate back to the tab navigator itself, which returns to whatever
+      // screen was showing (Home, by default).
+      nav.navigate('MainTabs');
     } catch (e: any) {
       setError(e?.message ?? 'Could not save this entry.');
       setIsSaving(false);
@@ -166,6 +188,12 @@ export function ConfirmTransactionScreen() {
                 />
               ))}
             </View>
+            {type === 'ASSET' && (
+              <CText
+                txt="Assets (stocks, gold, FD, etc.) add to your net worth — they aren't counted as income or expense."
+                style={styles2.hintTxt}
+              />
+            )}
 
             <CText txt={`Amount (${CURRENCY_SYMBOL[currency] ?? currency})`} style={styles2.label} />
             <TextInput
@@ -228,6 +256,7 @@ const makeStyles = (colors: AppColors) => StyleSheet.create({
   transcript: { fontSize: 14, color: colors.textMuted, fontStyle: 'italic', marginBottom: 20, lineHeight: 20 },
   label: { fontSize: 12, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8, marginTop: 4 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 },
+  hintTxt: { fontSize: 12, color: colors.textMuted, lineHeight: 17, marginTop: -2, marginBottom: 10 },
   input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: 12, fontSize: 15, color: colors.text, backgroundColor: colors.surface, marginBottom: 8 },
   saveBtn: { marginTop: 24, backgroundColor: colors.primary, borderRadius: radius.md, paddingVertical: 15, alignItems: 'center' },
   saveTxt: { color: '#fff', fontSize: 16, fontWeight: '700' },

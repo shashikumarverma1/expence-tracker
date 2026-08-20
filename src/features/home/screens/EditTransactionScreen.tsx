@@ -27,7 +27,7 @@ import {
 
 type RouteParams = { EditTransactionScreen: { transaction: Transaction } };
 
-const TYPES: TransactionType[] = ['EXPENSE', 'INCOME', 'ASSET', 'OTHER'];
+const TYPES: TransactionType[] = ['EXPENSE', 'INCOME', 'ASSET'];
 
 const TYPE_LABEL: Record<TransactionType, string> = {
   EXPENSE: 'Expense', INCOME: 'Income', ASSET: 'Asset', OTHER: 'Other',
@@ -139,6 +139,12 @@ export function EditTransactionScreen() {
               />
             ))}
           </View>
+          {type === 'ASSET' && (
+            <CText
+              txt="Assets (stocks, gold, FD, etc.) add to your net worth — they aren't counted as income or expense."
+              style={s.hintTxt}
+            />
+          )}
 
           <CText txt={`Amount (${CURRENCY_SYMBOL[tx.currency] ?? tx.currency ?? '₹'})`} style={s.label} />
           <TextInput
@@ -196,6 +202,7 @@ const makeStyles = (colors: AppColors) => StyleSheet.create({
   transcript: { fontSize: 14, color: colors.textMuted, fontStyle: 'italic', marginBottom: 20, lineHeight: 20 },
   label: { fontSize: 12, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8, marginTop: 4 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 },
+  hintTxt: { fontSize: 12, color: colors.textMuted, lineHeight: 17, marginTop: -2, marginBottom: 10 },
   input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: 12, fontSize: 15, color: colors.text, backgroundColor: colors.surface, marginBottom: 8 },
   saveBtn: { marginTop: 24, backgroundColor: colors.primary, borderRadius: radius.md, paddingVertical: 15, alignItems: 'center' },
   saveTxt: { color: '#fff', fontSize: 16, fontWeight: '700' },
