@@ -8,6 +8,9 @@ import { useTheme } from '../../../core/hook';
 import { AppColors, colors as brandColors, radius, shadow, formatCompactINR } from '../../../core/utils';
 import { useNetWorth } from '../hooks/useNetWorth';
 import { ASSET_FIELD_KEYS, NetWorth } from '../../../core/types/transaction';
+import { useBalanceVisibility } from '../../../core/store/balance/useBalanceVisibility';
+
+const BALANCE_MASK = '••••••';
 
 // ── Asset field -> display label + icon ─────────────────────────
 const ASSET_META: Record<string, { label: string; icon: keyof typeof Ionicons.glyphMap }> = {
@@ -43,6 +46,8 @@ export function NetWorthScreen() {
   const nav = useNavigation<any>();
   const { colors } = useTheme();
   const { netWorth, isLoading } = useNetWorth();
+  const hidden = useBalanceVisibility((st) => st.hidden);
+  const toggleHidden = useBalanceVisibility((st) => st.toggle);
   const s = makeStyles(colors);
 
   const rows = ASSET_FIELD_KEYS
@@ -72,9 +77,18 @@ export function NetWorthScreen() {
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         {/* ── Total net worth ── */}
         <View style={[s.totalCard, { backgroundColor: colors.surface }, shadow.card]}>
-          <CText txt="Total Net Worth" style={s.totalLabel} />
+          <View style={s.totalHeaderRow}>
+            <CText txt="Total Net Worth" style={s.totalLabel} />
+            <TouchableOpacity
+              onPress={toggleHidden}
+              hitSlop={10}
+              style={[s.eyeBtn, { backgroundColor: colors.primaryDim }]}
+            >
+              <Ionicons name={hidden ? 'eye-off-outline' : 'eye-outline'} size={18} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
           <CText
-            txt={formatINR(netWorth.totalNetWorth)}
+            txt={hidden ? BALANCE_MASK : formatINR(netWorth.totalNetWorth)}
             style={[s.totalValue, { color: netWorth.totalNetWorth < 0 ? brandColors.redText : colors.text }]}
           />
         </View>
@@ -82,8 +96,8 @@ export function NetWorthScreen() {
         {/* ── Assets vs Liabilities bar ── */}
         <View style={[s.card, { backgroundColor: colors.surface }, shadow.card]}>
           <View style={s.rowBetween}>
-            <CText txt={`Assets · ${formatINR(netWorth.totalAssets)}`} style={[s.smallLabel, { color: brandColors.greenText }]} />
-            <CText txt={`Liabilities · ${formatINR(netWorth.liabilities)}`} style={[s.smallLabel, { color: brandColors.redText }]} />
+            <CText txt={`Assets · ${hidden ? BALANCE_MASK : formatINR(netWorth.totalAssets)}`} style={[s.smallLabel, { color: brandColors.greenText }]} />
+            <CText txt={`Liabilities · ${hidden ? BALANCE_MASK : formatINR(netWorth.liabilities)}`} style={[s.smallLabel, { color: brandColors.redText }]} />
           </View>
           <View style={s.splitBarBg}>
             <View style={[s.splitBarFill, { width: `${Math.max(4, assetsPct * 100)}%`, backgroundColor: brandColors.green }]} />
@@ -118,7 +132,7 @@ export function NetWorthScreen() {
               </View>
             </View>
             <CText
-              txt={formatINR(r.value)}
+              txt={hidden ? BALANCE_MASK : formatINR(r.value)}
               style={[s.assetValue, { color: r.value < 0 ? brandColors.redText : colors.text }]}
             />
             <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
@@ -130,7 +144,7 @@ export function NetWorthScreen() {
         <View style={[s.card, { backgroundColor: colors.surface }, shadow.card]}>
           <View style={s.rowBetween}>
             <CText txt="Total outstanding debt" style={[s.assetLabel, { color: colors.text }]} />
-            <CText txt={formatINR(netWorth.liabilities)} style={[s.assetValue, { color: brandColors.redText }]} />
+            <CText txt={hidden ? BALANCE_MASK : formatINR(netWorth.liabilities)} style={[s.assetValue, { color: brandColors.redText }]} />
           </View>
         </View>
       </ScrollView>
@@ -145,6 +159,8 @@ const makeStyles = (colors: AppColors) => StyleSheet.create({
   scroll: { padding: 20, paddingBottom: 48 },
 
   totalCard: { borderRadius: radius.lg, padding: 20, alignItems: 'center', marginBottom: 16 },
+  totalHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  eyeBtn: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   totalLabel: { fontSize: 12, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.6 },
   totalValue: { fontSize: 34, fontWeight: '800', marginTop: 6 },
 

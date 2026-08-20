@@ -4,7 +4,9 @@ import { SectionList, StyleSheet, TouchableOpacity, View } from 'react-native';
 import CText from '../../../core/component/CText';
 import { AppColors, colors as brandColors, radius, shadow } from '../../../core/utils';
 import { Transaction, TransactionType } from '../../../core/types/transaction';
+import { useBalanceVisibility } from '../../../core/store/balance/useBalanceVisibility';
 
+const BALANCE_MASK = '••••••';
 const CURRENCY_SYMBOL: Record<string, string> = { INR: '₹', USD: '$', EUR: '€', GBP: '£' };
 
 function formatAmount(amount: number, currency = 'INR'): string {
@@ -47,7 +49,7 @@ const TYPE_STYLE: Record<TransactionType, { icon: React.ComponentProps<typeof Io
 };
 
 // Two-level grouping (month → day) flattened into SectionList sections.
-type DaySection = { title: string; monthTitle: string; net: number; data: Transaction[] };
+type DaySection = { title: string; monthTitle: string; net: number; hasAsset: boolean; data: Transaction[] };
 
 function groupByMonthThenDay(items: Transaction[]): DaySection[] {
   const sections: DaySection[] = [];
@@ -59,7 +61,7 @@ function groupByMonthThenDay(items: Transaction[]): DaySection[] {
     const dayKey = dayLabel(tx.timestamp);
 
     if (monthKey !== currentMonthKey || dayKey !== currentDayKey) {
-      sections.push({ title: dayKey, monthTitle: monthKey, net: 0, data: [] });
+      sections.push({ title: dayKey, monthTitle: monthKey, net: 0, hasAsset: false, data: [] });
       currentMonthKey = monthKey;
       currentDayKey = dayKey;
     }
@@ -68,6 +70,7 @@ function groupByMonthThenDay(items: Transaction[]): DaySection[] {
     section.data.push(tx);
     const sign = TYPE_STYLE[tx.type]?.sign;
     section.net += sign === '-' ? -tx.amount : sign === '+' ? tx.amount : 0;
+    if (tx.type === 'ASSET') section.hasAsset = true;
   }
 
   return sections;
@@ -86,6 +89,7 @@ export function TransactionGroupedList({
 }) {
   const s = makeStyles(colors);
   const sections = useMemo(() => groupByMonthThenDay(transactions), [transactions]);
+  const hidden = useBalanceVisibility((st) => st.hidden);
 
   let lastMonthTitle = '';
 
@@ -109,7 +113,10 @@ export function TransactionGroupedList({
             <View style={s.dayHeader}>
               <CText txt={section.title} style={[s.dayHeaderTitle, { color: colors.text }]} />
               {section.net !== 0 && (
-                <CText txt={`${netSign}${formatAmount(section.net)}`} style={[s.dayHeaderTotal, { color: netColor }]} />
+                <CText
+                  txt={hidden && section.hasAsset ? BALANCE_MASK : `${netSign}${formatAmount(section.net)}`}
+                  style={[s.dayHeaderTotal, { color: netColor }]}
+                />
               )}
             </View>
           </View>
@@ -137,7 +144,10 @@ export function TransactionGroupedList({
               )}
             </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <CText txt={`${ts.sign}${formatAmount(item.amount, item.currency)}`} style={[s.amount, { color: ts.fg }]} />
+              <CText
+                txt={item.type === 'ASSET' && hidden ? BALANCE_MASK : `${ts.sign}${formatAmount(item.amount, item.currency)}`}
+                style={[s.amount, { color: ts.fg }]}
+              />
               <CText txt={formatDateTime(item.timestamp)} style={[s.time, { color: colors.textMuted }]} numberOfLines={1} />
             </View>
           </TouchableOpacity>

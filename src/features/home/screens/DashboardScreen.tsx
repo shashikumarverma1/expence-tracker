@@ -9,6 +9,9 @@ import { AppColors, colors as brandColors, radius, shadow, formatCompactINR } fr
 import { useTransactions } from '../hooks/useTransactions';
 import { useNetWorth } from '../hooks/useNetWorth';
 import { Emotion } from '../../../core/types/transaction';
+import { useBalanceVisibility } from '../../../core/store/balance/useBalanceVisibility';
+
+const BALANCE_MASK = '••••••';
 
 const EMOTION_EMOJI: Record<Emotion, string> = {
   happy: '😊', neutral: '😐', guilty: '😔', stressed: '😰',
@@ -35,6 +38,8 @@ export function DashboardScreen() {
   const { colors } = useTheme();
   const { transactions } = useTransactions();
   const { netWorth } = useNetWorth();
+  const hidden = useBalanceVisibility((st) => st.hidden);
+  const toggleHidden = useBalanceVisibility((st) => st.toggle);
   const s = makeStyles(colors);
 
   const stats = useMemo(() => {
@@ -115,9 +120,16 @@ export function DashboardScreen() {
           onPress={() => nav.navigate('NetWorthScreen')}
           style={[s.totalCard, { backgroundColor: colors.surface }, shadow.card]}
         >
+          <TouchableOpacity
+            onPress={toggleHidden}
+            hitSlop={10}
+            style={[s.eyeBtn, { backgroundColor: colors.primaryDim }]}
+          >
+            <Ionicons name={hidden ? 'eye-off-outline' : 'eye-outline'} size={18} color={colors.primary} />
+          </TouchableOpacity>
           <CText txt="Total Net Worth" style={s.totalLabel} />
           <CText
-            txt={formatINR(netWorth.totalNetWorth)}
+            txt={hidden ? BALANCE_MASK : formatINR(netWorth.totalNetWorth)}
             style={[s.totalValue, { color: netWorth.totalNetWorth < 0 ? brandColors.redText : colors.text }]}
           />
           <View style={s.rowCenter}>
@@ -193,8 +205,8 @@ export function DashboardScreen() {
         <CText txt="ASSETS VS LIABILITIES" style={s.sectionLabel} />
         <View style={[s.card, { backgroundColor: colors.surface }, shadow.card]}>
           <View style={s.catTop}>
-            <CText txt={`Assets · ${formatINR(netWorth.totalAssets)}`} style={[s.miniLabel, { color: brandColors.greenText }]} />
-            <CText txt={`Liabilities · ${formatINR(netWorth.liabilities)}`} style={[s.miniLabel, { color: brandColors.redText }]} />
+            <CText txt={`Assets · ${hidden ? BALANCE_MASK : formatINR(netWorth.totalAssets)}`} style={[s.miniLabel, { color: brandColors.greenText }]} />
+            <CText txt={`Liabilities · ${hidden ? BALANCE_MASK : formatINR(netWorth.liabilities)}`} style={[s.miniLabel, { color: brandColors.redText }]} />
           </View>
           <View style={s.splitBarBg}>
             <View style={[s.splitBarFill, { width: `${Math.max(4, assetsPct * 100)}%`, backgroundColor: brandColors.green }]} />
@@ -203,7 +215,7 @@ export function DashboardScreen() {
             <View style={s.loanRow}>
               <Ionicons name="cash-outline" size={14} color={brandColors.redText} />
               <CText txt="Total loans taken" style={[s.muted, { flex: 1 }]} />
-              <CText txt={formatINR(stats.totalLoans)} style={[s.catAmount, { color: brandColors.redText }]} />
+              <CText txt={hidden ? BALANCE_MASK : formatINR(stats.totalLoans)} style={[s.catAmount, { color: brandColors.redText }]} />
             </View>
           )}
         </View>
@@ -219,6 +231,7 @@ const makeStyles = (colors: AppColors) => StyleSheet.create({
   scroll: { padding: 20, paddingBottom: 48 },
 
   totalCard: { borderRadius: radius.lg, padding: 20, alignItems: 'center', marginBottom: 20 },
+  eyeBtn: { position: 'absolute', top: 12, right: 12, width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   totalLabel: { fontSize: 12, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.6 },
   totalValue: { fontSize: 32, fontWeight: '800', marginTop: 6, marginBottom: 8 },
   rowCenter: { flexDirection: 'row', alignItems: 'center', gap: 2 },

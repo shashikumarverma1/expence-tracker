@@ -27,6 +27,7 @@ import { useIsPro } from '../../subscription/hooks/useIsPro';
 import { SubscriptionModal } from '../../subscription/screens/SubscriptionModal';
 import { getExpoPushToken, saveExpoPushToken } from '../../notification/hook/expoPushToken';
 import { useAuthStore } from '../../../core/store/auth/useAuthStore';
+import { useBalanceVisibility } from '../../../core/store/balance/useBalanceVisibility';
 import { storage } from '../../../core/config/mmkv';
 
 // ─── Config ──────────────────────────────────────────────────────
@@ -52,6 +53,8 @@ const RING_LABEL: Record<string, string> = {
   gold: 'Gold', realEstate: 'Real Estate', otherAssets: 'Other',
 };
 
+const BALANCE_MASK = '••••••';
+
 function NetWorthRing({
   netWorth, colors, onSelectAsset,
 }: {
@@ -59,6 +62,8 @@ function NetWorthRing({
   colors: AppColors;
   onSelectAsset: (assetClass: string, label: string) => void;
 }) {
+  const hidden = useBalanceVisibility((s) => s.hidden);
+  const toggleHidden = useBalanceVisibility((s) => s.toggle);
   const size = 112;
   const strokeWidth = 12;
   const radius = (size - strokeWidth) / 2;
@@ -106,17 +111,24 @@ function NetWorthRing({
             );
           })}
         </Svg>
-        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        <TouchableOpacity
+          style={StyleSheet.absoluteFill}
+          activeOpacity={0.6}
+          onPress={toggleHidden}
+        >
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 }}>
             <CText
-              txt={`${netWorth.totalNetWorth < 0 ? '-' : ''}${formatAmount(netWorth.totalNetWorth)}`}
+              txt={hidden ? BALANCE_MASK : `${netWorth.totalNetWorth < 0 ? '-' : ''}${formatAmount(netWorth.totalNetWorth)}`}
               style={[s.statValue, { color: colors.text, fontSize: 15 }]}
               numberOfLines={1}
               adjustsFontSizeToFit
             />
-            <CText txt="net worth" style={[s.statLabel, { color: colors.textMuted, fontSize: 10 }]} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 2 }}>
+              <Ionicons name={hidden ? 'eye-off-outline' : 'eye-outline'} size={16} color={colors.textMuted} />
+              <CText txt="net worth" style={[s.statLabel, { color: colors.textMuted, fontSize: 10 }]} />
+            </View>
           </View>
-        </View>
+        </TouchableOpacity>
       </View>
       <View style={{ marginLeft: 14, flex: 1 }}>
         {segments.length === 0 ? (
@@ -136,7 +148,7 @@ function NetWorthRing({
               >
                 <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: seg.color, marginRight: 6 }} />
                 <CText
-                  txt={`${label} · ${formatAmount(seg.value)}`}
+                  txt={`${label} · ${hidden ? BALANCE_MASK : formatAmount(seg.value)}`}
                   style={[s.statLabel, { color: colors.text, fontSize: 12 }]}
                   numberOfLines={1}
                 />
@@ -154,7 +166,7 @@ function NetWorthRing({
           >
             <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: brandColors.red, marginRight: 6 }} />
             <CText
-              txt={`Loan · ${formatAmount(loanSegment.value)}`}
+              txt={`Loan · ${hidden ? BALANCE_MASK : formatAmount(loanSegment.value)}`}
               style={[s.statLabel, { color: brandColors.redText, fontSize: 12 }]}
               numberOfLines={1}
             />
@@ -258,6 +270,7 @@ function TransactionRow({
 }) {
   const s = makeStyles(colors);
   const ts = TX_ROW_STYLE[type] ?? TX_ROW_STYLE.OTHER;
+  const hidden = useBalanceVisibility((st) => st.hidden);
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={[s.expenseRow, { backgroundColor: colors.surface }]}>
       <View style={[s.expenseIcon, { backgroundColor: ts.bg }]}>
@@ -274,7 +287,10 @@ function TransactionRow({
         )}
       </View>
       <View style={{ alignItems: 'flex-end' }}>
-        <CText txt={`${ts.sign}${formatAmount(amount, currency)}`} style={[s.expenseAmount, { color: ts.fg }]} />
+        <CText
+          txt={type === 'ASSET' && hidden ? BALANCE_MASK : `${ts.sign}${formatAmount(amount, currency)}`}
+          style={[s.expenseAmount, { color: ts.fg }]}
+        />
         <CText txt={timeLabel} style={[s.expenseTime, { color: colors.textMuted }]} numberOfLines={1} />
       </View>
     </TouchableOpacity>

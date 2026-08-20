@@ -8,8 +8,11 @@ import { useTheme } from '../../../core/hook';
 import { AppColors, colors as brandColors, radius, shadow } from '../../../core/utils';
 import { useTransactions } from '../hooks/useTransactions';
 import { Transaction } from '../../../core/types/transaction';
+import { useBalanceVisibility } from '../../../core/store/balance/useBalanceVisibility';
 
 type RouteParams = { AssetClassDetailScreen: { assetClass: string; label: string } };
+
+const BALANCE_MASK = '••••••';
 
 function formatINR(n: number): string {
   return `₹${n.toLocaleString('en-IN')}`;
@@ -25,6 +28,7 @@ export function AssetClassDetailScreen() {
   const { colors } = useTheme();
   const { transactions, isLoading } = useTransactions();
   const { assetClass, label } = route.params;
+  const hidden = useBalanceVisibility((s) => s.hidden);
 
   // "Cash" and "Bank/Digital Cash" are INCOME-type categories (plain money
   // added), while the rest (Stocks, FD, Gold, …) are ASSET-type holdings —
@@ -48,7 +52,10 @@ export function AssetClassDetailScreen() {
         <CText txt={item.rawSummary || 'Asset added'} style={[s.summary, { color: colors.text }]} numberOfLines={2} />
         <CText txt={formatDate(item.timestamp)} style={[s.meta, { color: colors.textMuted }]} />
       </View>
-      <CText txt={`+${formatINR(item.amount)}`} style={[s.amount, { color: brandColors.greenText }]} />
+      <CText
+        txt={item.type === 'ASSET' && hidden ? BALANCE_MASK : `+${formatINR(item.amount)}`}
+        style={[s.amount, { color: brandColors.greenText }]}
+      />
     </TouchableOpacity>
   );
 
