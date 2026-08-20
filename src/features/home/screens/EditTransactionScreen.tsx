@@ -33,6 +33,8 @@ const TYPE_LABEL: Record<TransactionType, string> = {
   EXPENSE: 'Expense', INCOME: 'Income', ASSET: 'Asset', OTHER: 'Other',
 };
 
+const CURRENCY_SYMBOL: Record<string, string> = { INR: '₹', USD: '$', EUR: '€', GBP: '£' };
+
 function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   const { colors } = useTheme();
   return (
@@ -138,7 +140,7 @@ export function EditTransactionScreen() {
             ))}
           </View>
 
-          <CText txt="Amount (₹)" style={s.label} />
+          <CText txt={`Amount (${CURRENCY_SYMBOL[tx.currency] ?? tx.currency ?? '₹'})`} style={s.label} />
           <TextInput
             value={amount}
             onChangeText={setAmount}

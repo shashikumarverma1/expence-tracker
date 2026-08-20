@@ -33,6 +33,8 @@ const TYPE_LABEL: Record<TransactionType, string> = {
   EXPENSE: 'Expense', INCOME: 'Income', ASSET: 'Asset', OTHER: 'Other',
 };
 
+const CURRENCY_SYMBOL: Record<string, string> = { INR: '₹', USD: '$', EUR: '€', GBP: '£' };
+
 interface ClassifyResult {
   id: string;
   type: TransactionType;
@@ -165,7 +167,7 @@ export function ConfirmTransactionScreen() {
               ))}
             </View>
 
-            <CText txt="Amount (₹)" style={styles2.label} />
+            <CText txt={`Amount (${CURRENCY_SYMBOL[currency] ?? currency})`} style={styles2.label} />
             <TextInput
               value={amount}
               onChangeText={setAmount}

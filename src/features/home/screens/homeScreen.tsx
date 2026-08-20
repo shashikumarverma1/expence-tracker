@@ -3,14 +3,17 @@ import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
+  Keyboard,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import Svg, { Circle } from 'react-native-svg';
 import CText from '../../../core/component/CText';
@@ -288,6 +291,7 @@ export function HomeScreen() {
   const uid         = useAuthStore((s) => s.user?.uid);
   const { colors }  = useTheme();
   const { t }       = useTranslation();
+  const insets      = useSafeAreaInsets();
   const { transactions } = useTransactions();
   const { netWorth }     = useNetWorth();
   const { monthlyBudget } = useMonthlyBudget();
@@ -297,6 +301,35 @@ export function HomeScreen() {
   const [typedText,   setTypedText]   = useState('');
   const [budgetModal, setBudgetModal] = useState(false);
   const [budgetInput, setBudgetInput] = useState('');
+  const typeInputRef   = useRef<TextInput>(null);
+  const budgetInputRef = useRef<TextInput>(null);
+
+  // Tracks whether the keyboard is currently up, so a hardware back-press
+  // dismisses the keyboard first (one modal-close + keyboard-close animation
+  // running at once is what caused the flicker) and only closes the modal
+  // once the keyboard is already down — matching normal Android behavior.
+  //
+  // Also tracks the keyboard's height so the modal sheets (which sit inside
+  // a native Modal — a separate Android window that doesn't get the
+  // Activity's adjustResize) can lift manually above it. KeyboardAvoidingView
+  // behavior="height" was tried here first, but on Android it resizes the
+  // container the instant the keyboard opens, which shifts the focused
+  // TextInput and made Android re-trigger the keyboard — an open/close loop.
+  // Tracking height ourselves and applying it as padding avoids that resize
+  // feedback loop entirely.
+  const keyboardVisibleRef = useRef(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', (e) => {
+      keyboardVisibleRef.current = true;
+      setKeyboardHeight(e.endCoordinates?.height ?? 0);
+    });
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => {
+      keyboardVisibleRef.current = false;
+      setKeyboardHeight(0);
+    });
+    return () => { showSub.remove(); hideSub.remove(); };
+  }, []);
   const [savingBudget, setSavingBudget] = useState(false);
 
   const s = makeStyles(colors);
@@ -459,9 +492,21 @@ export function HomeScreen() {
         <SubscriptionModal visible={showPaywall} onClose={() => setShowPaywall(false)} />
 
         {/* ── Type trade modal ── */}
-        <Modal visible={typeModal} transparent animationType="slide" onRequestClose={() => setTypeModal(false)}>
-          <View style={s.modalOverlay}>
-            <View style={[s.modalCard, { backgroundColor: colors.surface }]}>
+        <Modal
+          visible={typeModal}
+          transparent
+          animationType="slide"
+          onRequestClose={() => {
+            if (keyboardVisibleRef.current) { Keyboard.dismiss(); return; }
+            setTypeModal(false);
+          }}
+          onShow={() => typeInputRef.current?.focus()}
+        >
+          <KeyboardAvoidingView
+            style={[s.modalOverlay, Platform.OS === 'android' && { paddingBottom: keyboardHeight }]}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          >
+            <View style={[s.modalCard, { backgroundColor: colors.surface, paddingBottom: Math.max(36, 20 + insets.bottom) }]}>
               <CText style={[s.modalTitle, { color: colors.text }]}>
                 {t('record_screen.title')}
               </CText>
@@ -469,13 +514,13 @@ export function HomeScreen() {
                 {t('record_screen.speak_freely')}
               </CText>
               <TextInput
+                ref={typeInputRef}
                 style={[s.textInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
                 placeholder={t('record_screen.tap_to_start')}
                 placeholderTextColor={colors.textMuted}
                 multiline
                 value={typedText}
                 onChangeText={setTypedText}
-                autoFocus
               />
               <View style={s.modalBtns}>
                 <TouchableOpacity onPress={() => { setTypeModal(false); setTypedText(''); }} style={s.modalCancel}>
@@ -495,23 +540,35 @@ export function HomeScreen() {
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </Modal>
 
         {/* ── Budget modal ── */}
-        <Modal visible={budgetModal} transparent animationType="slide" onRequestClose={() => setBudgetModal(false)}>
-          <View style={s.modalOverlay}>
-            <View style={[s.modalCard, { backgroundColor: colors.surface }]}>
+        <Modal
+          visible={budgetModal}
+          transparent
+          animationType="slide"
+          onRequestClose={() => {
+            if (keyboardVisibleRef.current) { Keyboard.dismiss(); return; }
+            setBudgetModal(false);
+          }}
+          onShow={() => budgetInputRef.current?.focus()}
+        >
+          <KeyboardAvoidingView
+            style={[s.modalOverlay, Platform.OS === 'android' && { paddingBottom: keyboardHeight }]}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          >
+            <View style={[s.modalCard, { backgroundColor: colors.surface, paddingBottom: Math.max(36, 20 + insets.bottom) }]}>
               <CText style={[s.modalTitle, { color: colors.text }]} tx="budget.modal_title" />
               <CText style={[s.modalHint, { color: colors.textMuted }]} tx="budget.modal_hint" />
               <TextInput
+                ref={budgetInputRef}
                 style={[s.textInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background, minHeight: 0 }]}
                 placeholder={t('budget.placeholder')}
                 placeholderTextColor={colors.textMuted}
                 keyboardType="decimal-pad"
                 value={budgetInput}
                 onChangeText={setBudgetInput}
-                autoFocus
               />
               <View style={s.modalBtns}>
                 <TouchableOpacity onPress={() => setBudgetModal(false)} style={s.modalCancel}>
@@ -526,7 +583,7 @@ export function HomeScreen() {
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </Modal>
 
         {/* ── Transactions ── */}
