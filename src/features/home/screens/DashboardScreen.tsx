@@ -5,10 +5,10 @@ import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CText from '../../../core/component/CText';
 import { useTheme } from '../../../core/hook';
-import { AppColors, colors as brandColors, radius, shadow } from '../../../core/utils';
+import { AppColors, colors as brandColors, radius, shadow, formatCompactINR } from '../../../core/utils';
 import { useTransactions } from '../hooks/useTransactions';
 import { useNetWorth } from '../hooks/useNetWorth';
-import { Emotion, isIncomeCategory } from '../../../core/types/transaction';
+import { Emotion } from '../../../core/types/transaction';
 
 const EMOTION_EMOJI: Record<Emotion, string> = {
   happy: '😊', neutral: '😐', guilty: '😔', stressed: '😰',
@@ -20,15 +20,7 @@ const CATEGORY_PALETTE = [
   brandColors.green, '#8D6E63', '#AB47BC', '#78909C', '#FF8A65', '#26A69A', '#4DA3FF',
 ];
 
-function formatINR(n: number): string {
-  const sign = n < 0 ? '-' : '';
-  const abs = Math.abs(n);
-  const str = abs >= 10000000 ? `${(abs / 10000000).toFixed(1)}Cr`
-    : abs >= 100000 ? `${(abs / 100000).toFixed(1)}L`
-    : abs >= 1000 ? `${(abs / 1000).toFixed(1)}K`
-    : `${Math.round(abs)}`;
-  return `${sign}₹${str}`;
-}
+const formatINR = formatCompactINR;
 
 function isThisMonth(ms: number): boolean {
   const d = new Date(ms);
@@ -51,17 +43,36 @@ export function DashboardScreen() {
     let totalIncome = 0;
     let totalExpense = 0;
     let expenseCount = 0;
+    let loansThisMonth = 0;
     const byCategory = new Map<string, number>();
     const emotionOnExpense = new Map<Emotion, number>();
 
     for (const tx of thisMonth) {
-      if (tx.type === 'ASSET' && isIncomeCategory(tx.category)) totalIncome += tx.amount;
-      if (tx.type === 'EXPENSE') {
+      const type = String(tx.type).toUpperCase();
+      if (type === 'INCOME') {
+        // Loan money isn't real income/profit — it's borrowed, offset by an
+        // equal liability — so it's tracked separately, not in totalIncome.
+        if (tx.category === 'Loan') {
+          loansThisMonth += tx.amount;
+        } else {
+          totalIncome += tx.amount;
+        }
+      }
+      if (type === 'EXPENSE') {
         totalExpense += tx.amount;
         expenseCount += 1;
         const cat = tx.category ?? 'Other';
         byCategory.set(cat, (byCategory.get(cat) ?? 0) + tx.amount);
         emotionOnExpense.set(tx.emotion, (emotionOnExpense.get(tx.emotion) ?? 0) + 1);
+      }
+    }
+
+    // Loans taken all-time — mirrors netWorth.liabilities (the only source
+    // of liabilities today is a "Loan" income entry), broken out by name.
+    let totalLoans = 0;
+    for (const tx of transactions) {
+      if (String(tx.type).toUpperCase() === 'INCOME' && tx.category === 'Loan') {
+        totalLoans += tx.amount;
       }
     }
 
@@ -78,6 +89,8 @@ export function DashboardScreen() {
       categories,
       topEmotion,
       expenseCount,
+      loansThisMonth,
+      totalLoans,
     };
   }, [transactions]);
 
@@ -120,6 +133,9 @@ export function DashboardScreen() {
             <Ionicons name="arrow-down-circle-outline" size={18} color={brandColors.greenText} />
             <CText txt={formatINR(stats.totalIncome)} style={[s.miniValue, { color: brandColors.greenText }]} />
             <CText txt="Income" style={s.miniLabel} />
+            {stats.loansThisMonth > 0 && (
+              <CText txt={`incl. ${formatINR(stats.loansThisMonth)} loan`} style={s.loanHint} />
+            )}
           </View>
           <View style={[s.miniCard, { backgroundColor: colors.surface }, shadow.card]}>
             <Ionicons name="arrow-up-circle-outline" size={18} color={brandColors.redText} />
@@ -183,6 +199,13 @@ export function DashboardScreen() {
           <View style={s.splitBarBg}>
             <View style={[s.splitBarFill, { width: `${Math.max(4, assetsPct * 100)}%`, backgroundColor: brandColors.green }]} />
           </View>
+          {stats.totalLoans > 0 && (
+            <View style={s.loanRow}>
+              <Ionicons name="cash-outline" size={14} color={brandColors.redText} />
+              <CText txt="Total loans taken" style={[s.muted, { flex: 1 }]} />
+              <CText txt={formatINR(stats.totalLoans)} style={[s.catAmount, { color: brandColors.redText }]} />
+            </View>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -222,4 +245,7 @@ const makeStyles = (colors: AppColors) => StyleSheet.create({
 
   splitBarBg: { height: 10, borderRadius: 6, backgroundColor: brandColors.redBg, overflow: 'hidden' },
   splitBarFill: { height: 10, borderRadius: 6 },
+
+  loanRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12 },
+  loanHint: { fontSize: 10, color: brandColors.redText, fontWeight: '600', marginTop: 1 },
 });

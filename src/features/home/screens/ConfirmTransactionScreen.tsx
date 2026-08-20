@@ -27,10 +27,10 @@ import {
 
 type RouteParams = { ConfirmTransactionScreen: { audioUri?: string; transcript: string } };
 
-const TYPES: TransactionType[] = ['EXPENSE', 'ASSET', 'OTHER'];
+const TYPES: TransactionType[] = ['EXPENSE', 'INCOME', 'ASSET', 'OTHER'];
 
 const TYPE_LABEL: Record<TransactionType, string> = {
-  EXPENSE: 'Expense', ASSET: 'Asset', OTHER: 'Other',
+  EXPENSE: 'Expense', INCOME: 'Income', ASSET: 'Asset', OTHER: 'Other',
 };
 
 interface ClassifyResult {

@@ -2,9 +2,10 @@ import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions/v1';
 import { db, REGION } from './config';
 
-// ASSET holding categories -> the net-worth field they live in. Categories not
-// listed here (Salary, Freelance, Business, Interest, Dividend, Gift, Bonus,
-// Refund) are income — they credit Bank/Digital Cash directly instead.
+// Holding categories (ASSET type) and the two liquid INCOME categories
+// (Cash, Bank/Digital Cash) -> the net-worth field they credit. Every other
+// INCOME category (Salary, Freelance, Business, Interest, Dividend, Gift,
+// Bonus, Refund) credits Bank/Digital Cash directly instead — see computeDelta.
 const ASSET_FIELD_MAP: Record<string, string> = {
   'Cash': 'cash',
   'Bank/Digital Cash': 'digitalCash',
@@ -42,6 +43,17 @@ interface AppliedFields {
 function computeDelta(f: AppliedFields): Record<string, number> {
   if (f.type === 'EXPENSE') {
     return { [CASH_FIELD]: -f.amount };
+  }
+  if (f.type === 'INCOME') {
+    // "Cash" credits the cash field directly; every other income category
+    // (Salary, Freelance, Bank/Digital Cash, …) credits Bank/Digital Cash.
+    const field = f.category === 'Cash' ? ASSET_FIELD_MAP['Cash'] : CASH_FIELD;
+    // "Loan" is borrowed money — it lands in cash/bank same as any income,
+    // but it's not a net-worth gain, so an equal amount goes to liabilities.
+    if (f.category === 'Loan') {
+      return { [field]: f.amount, liabilities: f.amount };
+    }
+    return { [field]: f.amount };
   }
   if (f.type === 'ASSET') {
     const holding = f.category ? ASSET_FIELD_MAP[f.category] : undefined;
@@ -101,7 +113,7 @@ export const updateNetWorth = functions
           needsConfirmation?: boolean; type?: string; amount?: number; category?: string | null;
         };
         if (!data.needsConfirmation && typeof data.amount === 'number'
-          && (data.type === 'EXPENSE' || data.type === 'ASSET')) {
+          && (data.type === 'EXPENSE' || data.type === 'INCOME' || data.type === 'ASSET')) {
           const applied: AppliedFields = { type: data.type, amount: data.amount, category: data.category ?? null };
           const delta = computeDelta(applied);
           for (const [k, v] of Object.entries(delta)) current[k] = (current[k] ?? 0) + v;

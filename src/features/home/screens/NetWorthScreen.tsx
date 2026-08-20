@@ -5,7 +5,7 @@ import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CText from '../../../core/component/CText';
 import { useTheme } from '../../../core/hook';
-import { AppColors, colors as brandColors, radius, shadow } from '../../../core/utils';
+import { AppColors, colors as brandColors, radius, shadow, formatCompactINR } from '../../../core/utils';
 import { useNetWorth } from '../hooks/useNetWorth';
 import { ASSET_FIELD_KEYS, NetWorth } from '../../../core/types/transaction';
 
@@ -37,15 +37,7 @@ const PALETTE = [
   brandColors.red, '#4DA3FF', '#FF8A65', '#8D6E63', '#26A69A', '#AB47BC', '#78909C',
 ];
 
-function formatINR(n: number): string {
-  const sign = n < 0 ? '-' : '';
-  const abs = Math.abs(n);
-  const str = abs >= 10000000 ? `${(abs / 10000000).toFixed(1)}Cr`
-    : abs >= 100000 ? `${(abs / 100000).toFixed(1)}L`
-    : abs >= 1000 ? `${(abs / 1000).toFixed(1)}K`
-    : `${Math.round(abs)}`;
-  return `${sign}₹${str}`;
-}
+const formatINR = formatCompactINR;
 
 export function NetWorthScreen() {
   const nav = useNavigation<any>();

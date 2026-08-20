@@ -8,24 +8,29 @@ const SYSTEM_PROMPT = `You are a financial transaction classifier for a voice-ba
 
 ## TRANSACTION TYPES
 Classify into exactly one type:
-- "EXPENSE" — money spent, paid, or lost ("kharch kiya", "spent", "paid for", "lost", "gaya/gayi") — does not create a lasting asset
-- "ASSET" — money earned/received, or money held/moved into an asset ("kamaya", "mila", "earned", "received", salary, freelance payment, business income, interest, dividend, gift, bonus, refund, OR cash, bank balance, stocks, FD, RD, mutual funds, crypto, gold, real estate)
-- "OTHER" — doesn't fit EXPENSE or ASSET: lending money to someone, borrowing money (not a formal loan), a reminder/note-to-self about money, or anything genuinely ambiguous. Use this rarely — only when EXPENSE/ASSET truly don't apply.
+- "EXPENSE" — money going out: spent, paid, or lost ("kharch kiya", "spent", "paid for", "lost", "gaya/gayi") — does not create a lasting asset
+- "INCOME" — money coming in that isn't already an investment/holding: salary, freelance payment, business income, interest, dividend, gift, bonus, refund ("kamaya", "mila", "earned", "received") — OR simply adding cash/bank balance you now have in hand — OR a formal loan/borrowing received (bank loan, personal loan) — category "Loan"
+- "ASSET" — money moved into something the user already holds or is investing in: stocks, bonds, FD, RD, mutual funds, crypto, gold, real estate ("khareeda", "invest kiya", "FD me dala")
+- "OTHER" — doesn't fit the above: lending money to someone, informally borrowing from a friend/family (not a bank/formal loan), a reminder/note-to-self about money, or anything genuinely ambiguous. Use this rarely — only when nothing else applies.
 
-Rule of thumb: "earned"/"income"/"got paid"/"mila" → ASSET. "spent"/"lost"/"paid"/"kharch"/"gaya" → EXPENSE. Everything else that's unclear → OTHER.
+Rule of thumb: "spent"/"lost"/"paid"/"kharch"/"gaya" → EXPENSE. "earned"/"got paid"/"mila"/added cash or bank balance/took a formal loan → INCOME. Bought/put money into stocks, FD, gold, crypto, real estate, etc. → ASSET. Everything else unclear → OTHER.
 
 ## CATEGORIES (choose based on type — always pick the closest match, never leave it generic)
 
 For EXPENSE, category must be one of:
 Grocery, Food & Dining, Entertainment, Bills & Utilities, Travel & Transport, Shopping, Health & Medical, Education, Rent, Subscriptions
 
+For INCOME, category must be one of:
+Salary, Freelance, Business, Interest, Dividend, Gift, Bonus, Refund, Cash, Bank/Digital Cash, Loan
+
+"Loan" is money borrowed formally (bank/personal loan) — it still credits cash/bank like any income, but the app also tracks it as a liability, since borrowed money isn't a net-worth gain.
+
 For ASSET, category must be one of:
-Salary, Freelance, Business, Interest, Dividend, Gift, Bonus, Refund, Cash, Bank/Digital Cash, Stocks, Bonds, FD, RD, Mutual Funds, Crypto, Gold, Real Estate
+Stocks, Bonds, FD, RD, Mutual Funds, Crypto, Gold, Real Estate
 
 For OTHER, category is always null — it has no subcategories.
 
-(The first eight — Salary..Refund — are money coming in. The rest are asset holdings being added to.)
-If an ASSET transcript doesn't name a specific source (e.g. "I earned 10 rupees"), default the category to "Business".
+If an INCOME transcript doesn't name a specific source (e.g. "I earned 10 rupees"), default the category to "Business".
 If an EXPENSE transcript doesn't name a specific reason, default the category to "Shopping".
 
 ## EMOTION DETECTION
@@ -37,7 +42,7 @@ If no emotional signal is present, use "neutral".
 Respond ONLY with valid JSON. No markdown, no backticks, no preamble, no explanation. Exact schema:
 
 {
-  "type": "EXPENSE | ASSET | OTHER",
+  "type": "EXPENSE | INCOME | ASSET | OTHER",
   "amount": number,
   "currency": "INR" (default, or detected currency),
   "category": "string — one of the categories listed above for the chosen type",
@@ -54,7 +59,13 @@ Respond ONLY with valid JSON. No markdown, no backticks, no preamble, no explana
 ## EXAMPLES
 
 Input: "maine 50000 salary mili is mahine"
-Output: {"type":"ASSET","amount":50000,"currency":"INR","category":"Salary","emotion":"happy","confidence":0.95,"raw_summary":"Received monthly salary of 50000"}
+Output: {"type":"INCOME","amount":50000,"currency":"INR","category":"Salary","emotion":"happy","confidence":0.95,"raw_summary":"Received monthly salary of 50000"}
+
+Input: "maine bank me 125000 dale"
+Output: {"type":"INCOME","amount":125000,"currency":"INR","category":"Bank/Digital Cash","emotion":"neutral","confidence":0.85,"raw_summary":"Added 125000 to bank"}
+
+Input: "mujhe bank se 50000 ka loan mila"
+Output: {"type":"INCOME","amount":50000,"currency":"INR","category":"Loan","emotion":"neutral","confidence":0.9,"raw_summary":"Received a 50000 loan from the bank"}
 
 Input: "50 rupaye ka doodh liya"
 Output: {"type":"EXPENSE","amount":50,"currency":"INR","category":"Grocery","emotion":"neutral","confidence":0.9,"raw_summary":"Bought milk for 50 rupees"}
@@ -75,7 +86,7 @@ Input: "20000 FD me dala"
 Output: {"type":"ASSET","amount":20000,"currency":"INR","category":"FD","emotion":"neutral","confidence":0.9,"raw_summary":"Put 20000 into an FD"}
 
 Input: "I earned 10 rupee"
-Output: {"type":"ASSET","amount":10,"currency":"INR","category":"Business","emotion":"happy","confidence":0.7,"raw_summary":"Earned 10 rupees"}
+Output: {"type":"INCOME","amount":10,"currency":"INR","category":"Business","emotion":"happy","confidence":0.7,"raw_summary":"Earned 10 rupees"}
 
 Input: "maine 200 rupee khoye"
 Output: {"type":"EXPENSE","amount":200,"currency":"INR","category":"Shopping","emotion":"worried","confidence":0.6,"raw_summary":"Lost 200 rupees"}
@@ -170,6 +181,7 @@ export const classifyTransaction = functions
 
     const raw = await callOpenAI(transcript);
     const parsed = parseClassification(raw);
+    if (parsed) parsed.type = parsed.type.toUpperCase();
 
     // Fallback: unparseable/low-signal transcript still becomes a row the
     // user can fix by hand, rather than silently dropping the entry.

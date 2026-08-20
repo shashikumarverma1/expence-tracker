@@ -15,10 +15,11 @@ import { useTranslation } from 'react-i18next';
 import Svg, { Circle } from 'react-native-svg';
 import CText from '../../../core/component/CText';
 import { useTheme } from '../../../core/hook';
-import { AppColors, colors as brandColors, radius, shadow } from '../../../core/utils';
+import { AppColors, colors as brandColors, radius, shadow, formatCompactAmount } from '../../../core/utils';
 import { useTransactions } from '../hooks/useTransactions';
 import { useNetWorth } from '../hooks/useNetWorth';
-import { Emotion, TransactionType, ASSET_FIELD_KEYS, NetWorth } from '../../../core/types/transaction';
+import { useMonthlyBudget, setMonthlyBudget } from '../hooks/useMonthlyBudget';
+import { ASSET_FIELD_KEYS, NetWorth, TransactionType } from '../../../core/types/transaction';
 import { useIsPro } from '../../subscription/hooks/useIsPro';
 import { SubscriptionModal } from '../../subscription/screens/SubscriptionModal';
 import { getExpoPushToken, saveExpoPushToken } from '../../notification/hook/expoPushToken';
@@ -31,54 +32,9 @@ const TODAY_LABEL = new Date().toLocaleDateString('en-IN', {
   weekday: 'long', day: 'numeric', month: 'short',
 });
 
-const EMOTION_COLOR: Record<Emotion, string> = {
-  happy: brandColors.green, neutral: brandColors.purple, guilty: brandColors.red,
-  stressed: brandColors.red, impulsive: brandColors.amber, proud: brandColors.green,
-  worried: brandColors.amber, excited: brandColors.green,
-};
-
-const EMOTION_BG: Record<Emotion, string> = {
-  happy: brandColors.greenBg, neutral: brandColors.purpleDim, guilty: brandColors.redBg,
-  stressed: brandColors.redBg, impulsive: brandColors.amberBg, proud: brandColors.greenBg,
-  worried: brandColors.amberBg, excited: brandColors.greenBg,
-};
-
-const TYPE_STYLE: Record<TransactionType, { bg: string; text: string; label: string; sign: '+' | '-' | '' }> = {
-  ASSET:   { bg: brandColors.greenBg,  text: brandColors.greenText,  label: '📈 Asset',   sign: '+' },
-  EXPENSE: { bg: brandColors.redBg,    text: brandColors.redText,    label: '🧾 Expense', sign: '-' },
-  OTHER:   { bg: brandColors.purpleDim, text: brandColors.purple,    label: '📝 Other',   sign: '' },
-};
-
 // ─── Helpers ─────────────────────────────────────────────────────
 
-const CURRENCY_SYMBOL: Record<string, string> = { INR: '₹', USD: '$', EUR: '€', GBP: '£' };
-
-function formatAmount(amount: number, currency = 'INR'): string {
-  const sym = CURRENCY_SYMBOL[currency] ?? '₹';
-  const abs = Math.abs(amount);
-  let str: string;
-  if (currency === 'INR') {
-    str = abs >= 100000
-      ? `${sym}${(abs / 100000).toFixed(abs % 100000 === 0 ? 0 : 1)}L`
-      : abs >= 1000
-      ? `${sym}${(abs / 1000).toFixed(abs % 1000 === 0 ? 0 : 1)}K`
-      : `${sym}${abs}`;
-  } else {
-    str = abs >= 1000000
-      ? `${sym}${(abs / 1000000).toFixed(1)}M`
-      : abs >= 1000
-      ? `${sym}${(abs / 1000).toFixed(abs % 1000 === 0 ? 0 : 1)}K`
-      : `${sym}${abs}`;
-  }
-  return str;
-}
-
-function formatTime(ms: number): string {
-  const d = new Date(ms);
-  const h = d.getHours();
-  const m = String(d.getMinutes()).padStart(2, '0');
-  return `${h % 12 || 12}:${m} ${h >= 12 ? 'PM' : 'AM'}`;
-}
+const formatAmount = formatCompactAmount;
 
 // ─── Net worth ring ──────────────────────────────────────────────
 
@@ -108,7 +64,15 @@ function NetWorthRing({
   const segments = ASSET_FIELD_KEYS
     .map((key, i) => ({ key, value: netWorth[key], color: RING_PALETTE[i % RING_PALETTE.length] }))
     .filter((r) => r.value > 0);
-  const total = segments.reduce((sum, r) => sum + r.value, 0);
+
+  // Loan money already sits inside cash/digitalCash above (it's real money
+  // you have), but it's still owed — draw it as its own red slice too, so
+  // the ring visually flags how much of the total is borrowed.
+  const loanSegment = netWorth.liabilities > 0
+    ? { key: 'loan', value: netWorth.liabilities, color: brandColors.red }
+    : null;
+  const ringSegments = loanSegment ? [...segments, loanSegment] : segments;
+  const total = ringSegments.reduce((sum, r) => sum + r.value, 0);
 
   let offset = 0;
   const s = makeStyles(colors);
@@ -121,7 +85,7 @@ function NetWorthRing({
             cx={size / 2} cy={size / 2} r={radius}
             stroke={colors.border} strokeWidth={strokeWidth} fill="none"
           />
-          {total > 0 && segments.map((seg) => {
+          {total > 0 && ringSegments.map((seg) => {
             const segLen = (seg.value / total) * circumference;
             const dashArray = `${segLen} ${circumference - segLen}`;
             const dashOffset = -offset;
@@ -142,12 +106,12 @@ function NetWorthRing({
         <View style={StyleSheet.absoluteFill} pointerEvents="none">
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 }}>
             <CText
-              txt={`${netWorth.totalNetWorth < 0 ? '-' : ''}${formatAmount(netWorth.totalNetWorth)}`}
+              txt={`${netWorth.totalAssets < 0 ? '-' : ''}${formatAmount(netWorth.totalAssets)}`}
               style={[s.statValue, { color: colors.text, fontSize: 15 }]}
               numberOfLines={1}
               adjustsFontSizeToFit
             />
-            <CText txt="net worth" style={[s.statLabel, { color: colors.textMuted, fontSize: 10 }]} />
+            <CText txt="total value" style={[s.statLabel, { color: colors.textMuted, fontSize: 10 }]} />
           </View>
         </View>
       </View>
@@ -176,54 +140,140 @@ function NetWorthRing({
               </TouchableOpacity>
             );
           })}
+        {/* Loan money is included in "total value" above and drawn as its
+            own red slice in the ring — it's real cash you have, but it's
+            still owed, so it's flagged here too. */}
+        {loanSegment && (
+          <TouchableOpacity
+            onPress={() => onSelectAsset('Loan', 'Loan')}
+            activeOpacity={0.6}
+            style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}
+          >
+            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: brandColors.red, marginRight: 6 }} />
+            <CText
+              txt={`Loan · ${formatAmount(loanSegment.value)}`}
+              style={[s.statLabel, { color: brandColors.redText, fontSize: 12 }]}
+              numberOfLines={1}
+            />
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
 }
 
-// ─── Mini entry card ─────────────────────────────────────────────
+// ─── Budget bar ──────────────────────────────────────────────────
 
-function MiniEntryCard({
-  emotion, type, amount, currency, summary, timeLabel, onPress, colors,
+function BudgetBar({
+  spent, budget, colors, onPress,
 }: {
-  emotion:   Emotion;
-  type:      TransactionType;
-  amount:    number;
-  currency?: string;
-  summary:   string;
-  timeLabel: string;
-  onPress:   () => void;
-  colors:    AppColors;
+  spent:   number;
+  budget:  number;
+  colors:  AppColors;
+  onPress: () => void;
 }) {
-  const emotionColor = EMOTION_COLOR[emotion] ?? brandColors.purple;
-  const emotionBg    = EMOTION_BG[emotion]    ?? brandColors.purpleDim;
-  const ts = TYPE_STYLE[type];
   const s = makeStyles(colors);
+
+  if (budget <= 0) {
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        activeOpacity={0.8}
+        style={[s.budgetCard, s.budgetCardEmpty, { backgroundColor: colors.surface }, shadow.card]}
+      >
+        <View style={[s.budgetIconWrap, { backgroundColor: colors.primaryDim }]}>
+          <Ionicons name="wallet-outline" size={18} color={colors.primary} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <CText style={[s.budgetTitle, { color: colors.text }]} tx="budget.set_cta" />
+          <CText style={[s.budgetSub, { color: colors.textMuted }]} tx="budget.set_cta_sub" />
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+      </TouchableOpacity>
+    );
+  }
+
+  const pct = Math.min(spent / budget, 1);
+  const over = spent > budget;
+  const barColor = over ? brandColors.redText : pct >= 0.8 ? brandColors.amberText : colors.primary;
 
   return (
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.8}
-      style={[s.entryCard, { borderLeftColor: emotionColor }]}
+      style={[s.budgetCard, { backgroundColor: colors.surface }, shadow.card]}
     >
-      <View style={s.entryTop}>
-        <View style={[s.emotionChip, { backgroundColor: emotionBg }]}>
-          <CText txt={emotion} style={[s.emotionTxt, { color: emotionColor }]} />
-        </View>
-        <View style={[s.resultChip, { backgroundColor: ts.bg }]}>
-          <CText txt={ts.label} style={[s.resultTxt, { color: ts.text }]} />
-        </View>
-        <View style={[s.pnlBadge, { backgroundColor: ts.sign === '+' ? brandColors.greenBg : ts.sign === '-' ? brandColors.redBg : brandColors.purpleDim }]}>
-          <CText
-            txt={`${ts.sign}${formatAmount(amount, currency)}`}
-            style={[s.pnlTxt, { color: ts.sign === '+' ? brandColors.greenText : ts.sign === '-' ? brandColors.redText : brandColors.purple }]}
-          />
-        </View>
-        <CText txt={timeLabel} style={[s.entryTime, { color: colors.textMuted }]} />
+      <View style={s.budgetHeaderRow}>
+        <CText style={[s.budgetTitle, { color: colors.text }]} tx="budget.title" />
+        <CText
+          txt={`${formatAmount(spent)} / ${formatAmount(budget)}`}
+          style={[s.budgetAmounts, { color: over ? brandColors.redText : colors.textMuted }]}
+        />
       </View>
-      {!!summary && (
-        <CText txt={summary} style={[s.entrySummary, { color: colors.text }]} />
-      )}
+      <View style={[s.budgetTrack, { backgroundColor: colors.border }]}>
+        <View style={[s.budgetFill, { width: `${pct * 100}%`, backgroundColor: barColor }]} />
+      </View>
+      <CText
+        style={[s.budgetSub, { color: over ? brandColors.redText : colors.textMuted, marginTop: 6 }]}
+        txt={over
+          ? `Over budget by ${formatAmount(spent - budget)}`
+          : `${formatAmount(budget - spent)} left this month`}
+      />
+    </TouchableOpacity>
+  );
+}
+
+// ─── Transaction row ─────────────────────────────────────────────
+
+function formatDateTime(ms: number): string {
+  const d = new Date(ms);
+  const h = d.getHours();
+  const m = String(d.getMinutes()).padStart(2, '0');
+  const time = `${h % 12 || 12}:${m} ${h >= 12 ? 'PM' : 'AM'}`;
+  const date = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  return `${date}, ${time}`;
+}
+
+const TX_ROW_STYLE: Record<TransactionType, { icon: React.ComponentProps<typeof Ionicons>['name']; bg: string; fg: string; sign: '+' | '-' | '' }> = {
+  EXPENSE: { icon: 'arrow-down-outline', bg: brandColors.redBg,    fg: brandColors.redText,   sign: '-' },
+  INCOME:  { icon: 'arrow-up-outline',   bg: brandColors.greenBg,  fg: brandColors.greenText, sign: '+' },
+  ASSET:   { icon: 'trending-up-outline', bg: brandColors.blueBg,  fg: brandColors.blueText,  sign: '+' },
+  OTHER:   { icon: 'ellipse-outline',    bg: brandColors.purpleDim, fg: brandColors.purple,   sign: '' },
+};
+
+function TransactionRow({
+  type, amount, currency, category, summary, timeLabel, onPress, colors,
+}: {
+  type:      TransactionType;
+  amount:    number;
+  currency?: string;
+  category:  string | null;
+  summary:   string;
+  timeLabel: string;
+  onPress:   () => void;
+  colors:    AppColors;
+}) {
+  const s = makeStyles(colors);
+  const ts = TX_ROW_STYLE[type] ?? TX_ROW_STYLE.OTHER;
+  return (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={[s.expenseRow, { backgroundColor: colors.surface }]}>
+      <View style={[s.expenseIcon, { backgroundColor: ts.bg }]}>
+        <Ionicons name={ts.icon} size={16} color={ts.fg} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <CText
+          txt={category || summary || 'Entry'}
+          style={[s.expenseTitle, { color: colors.text }]}
+          numberOfLines={1}
+        />
+        {!!summary && category && (
+          <CText txt={summary} style={[s.expenseSub, { color: colors.textMuted }]} numberOfLines={1} />
+        )}
+      </View>
+      <View style={{ alignItems: 'flex-end' }}>
+        <CText txt={`${ts.sign}${formatAmount(amount, currency)}`} style={[s.expenseAmount, { color: ts.fg }]} />
+        <CText txt={timeLabel} style={[s.expenseTime, { color: colors.textMuted }]} numberOfLines={1} />
+      </View>
     </TouchableOpacity>
   );
 }
@@ -240,10 +290,14 @@ export function HomeScreen() {
   const { t }       = useTranslation();
   const { transactions } = useTransactions();
   const { netWorth }     = useNetWorth();
+  const { monthlyBudget } = useMonthlyBudget();
   const isPro       = useIsPro();
   const [showPaywall, setShowPaywall] = useState(false);
   const [typeModal,   setTypeModal]   = useState(false);
   const [typedText,   setTypedText]   = useState('');
+  const [budgetModal, setBudgetModal] = useState(false);
+  const [budgetInput, setBudgetInput] = useState('');
+  const [savingBudget, setSavingBudget] = useState(false);
 
   const s = makeStyles(colors);
 
@@ -260,7 +314,33 @@ export function HomeScreen() {
     })();
   }, []);
 
-  const latest3    = transactions.slice(0, 3);
+  const latest3Transactions = transactions.slice(0, 3);
+
+  const monthSpent = transactions.reduce((sum, tx) => {
+    if (String(tx.type).toUpperCase() !== 'EXPENSE') return sum;
+    const d = new Date(tx.timestamp);
+    const now = new Date();
+    if (d.getFullYear() !== now.getFullYear() || d.getMonth() !== now.getMonth()) return sum;
+    return sum + tx.amount;
+  }, 0);
+
+  const openBudgetModal = () => {
+    setBudgetInput(monthlyBudget > 0 ? String(monthlyBudget) : '');
+    setBudgetModal(true);
+  };
+
+  const handleSaveBudget = async () => {
+    const amt = parseFloat(budgetInput);
+    if (!uid || isNaN(amt) || amt < 0) return;
+    setSavingBudget(true);
+    try {
+      await setMonthlyBudget(uid, amt);
+      setBudgetModal(false);
+    } finally {
+      setSavingBudget(false);
+    }
+  };
+
   const todayCount = transactions.filter((tx) => {
     const d  = new Date(tx.createdAt);
     const now = new Date();
@@ -291,7 +371,6 @@ export function HomeScreen() {
   const FREE_LIMIT = 10;
   const hitLimit   = !isPro && transactions.length >= FREE_LIMIT;
 
-  const goToPatterns = () => nav.navigate('MainTabs', { screen: 'Patterns' });
 
   return (
     <SafeAreaView style={[s.safe, { backgroundColor: colors.background }]}>
@@ -342,6 +421,14 @@ export function HomeScreen() {
             <Ionicons name="chevron-forward" size={16} color={colors.textMuted} style={{ marginTop: 4 }} />
           </View>
         </TouchableOpacity>
+
+        {/* ── Monthly budget ── */}
+        <BudgetBar
+          spent={monthSpent}
+          budget={monthlyBudget}
+          colors={colors}
+          onPress={openBudgetModal}
+        />
 
         {/* ── Record button ── */}
         <View style={s.recordArea}>
@@ -422,36 +509,67 @@ export function HomeScreen() {
           </View>
         </Modal>
 
-        {/* ── Recent entries ── */}
-        <View style={s.recentSection}>
-          <View style={s.recentHeader}>
-            <CText style={[s.recentTitle, { color: colors.textMuted }]}>
-              {t('recent_entries.title').toUpperCase()}
+        {/* ── Budget modal ── */}
+        <Modal visible={budgetModal} transparent animationType="slide" onRequestClose={() => setBudgetModal(false)}>
+          <View style={s.modalOverlay}>
+            <View style={[s.modalCard, { backgroundColor: colors.surface }]}>
+              <CText style={[s.modalTitle, { color: colors.text }]} tx="budget.modal_title" />
+              <CText style={[s.modalHint, { color: colors.textMuted }]} tx="budget.modal_hint" />
+              <TextInput
+                style={[s.textInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background, minHeight: 0 }]}
+                placeholder={t('budget.placeholder')}
+                placeholderTextColor={colors.textMuted}
+                keyboardType="decimal-pad"
+                value={budgetInput}
+                onChangeText={setBudgetInput}
+                autoFocus
+              />
+              <View style={s.modalBtns}>
+                <TouchableOpacity onPress={() => setBudgetModal(false)} style={s.modalCancel}>
+                  <CText style={{ color: colors.textMuted, fontWeight: '600' }} tx="cancel" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  disabled={savingBudget || !budgetInput.trim()}
+                  onPress={handleSaveBudget}
+                  style={[s.modalSubmit, { backgroundColor: colors.primary, opacity: savingBudget || !budgetInput.trim() ? 0.4 : 1 }]}
+                >
+                  <CText style={{ color: '#fff', fontWeight: '700' }} tx="budget.save" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* ── Transactions ── */}
+        <View style={s.expenseSection}>
+          <View style={s.expenseHeader}>
+            <CText style={[s.expenseHeaderTitle, { color: colors.textMuted }]}>
+              {t('transactions.title').toUpperCase()}
             </CText>
-            {latest3.length > 0 && (
-              <TouchableOpacity onPress={goToPatterns} hitSlop={10}>
-                <CText style={[s.viewAll, { color: colors.primary }]} tx="recent_entries.see_all" />
+            {latest3Transactions.length > 0 && (
+              <TouchableOpacity onPress={() => nav.navigate('TransactionListScreen')} hitSlop={10}>
+                <CText style={[s.viewAll, { color: colors.primary }]} tx="transactions.see_all" />
               </TouchableOpacity>
             )}
           </View>
 
-          {latest3.length === 0 ? (
+          {latest3Transactions.length === 0 ? (
             <View style={s.emptyState}>
               <View style={[s.emptyIcon, { backgroundColor: colors.primaryDim }]}>
                 <Ionicons name="journal-outline" size={28} color={colors.primary} />
               </View>
-              <CText style={[s.emptyTitle, { color: colors.text }]} txt="No entries yet" />
-              <CText style={[s.emptySub, { color: colors.textMuted }]} txt="Tap the mic and say what happened with your money." />
+              <CText style={[s.emptyTitle, { color: colors.text }]} tx="transactions.no_entries_title" />
+              <CText style={[s.emptySub, { color: colors.textMuted }]} tx="transactions.no_entries_sub" />
             </View>
-          ) : latest3.map((tx) => (
-            <MiniEntryCard
+          ) : latest3Transactions.map((tx) => (
+            <TransactionRow
               key={tx.id}
-              emotion={tx.emotion}
               type={tx.type}
               amount={tx.amount}
               currency={tx.currency}
+              category={tx.category}
               summary={tx.rawSummary}
-              timeLabel={tx.createdAt ? formatTime(tx.createdAt) : ''}
+              timeLabel={tx.createdAt ? formatDateTime(tx.createdAt) : ''}
               onPress={() => nav.navigate('EditTransactionScreen', { transaction: tx })}
               colors={colors}
             />
@@ -492,6 +610,19 @@ const makeStyles = (colors: AppColors) => StyleSheet.create({
   statValue: { fontSize: 18, fontWeight: '700' },
   statLabel: { fontSize: 13, marginTop: 1 },
 
+  budgetCard: {
+    marginHorizontal: 24, marginBottom: 4,
+    padding: 16, borderRadius: radius.lg,
+  },
+  budgetCardEmpty: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  budgetIconWrap: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  budgetHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  budgetTitle: { fontSize: 14, fontWeight: '700' },
+  budgetAmounts: { fontSize: 13, fontWeight: '600' },
+  budgetSub: { fontSize: 12 },
+  budgetTrack: { height: 8, borderRadius: 4, overflow: 'hidden' },
+  budgetFill: { height: '100%', borderRadius: 4 },
+
   recordArea:   { alignItems: 'center', gap: 20, paddingVertical: 28 },
   recordWrapper:{ width: RING, height: RING, alignItems: 'center', justifyContent: 'center' },
   pulseRing: {
@@ -519,27 +650,24 @@ const makeStyles = (colors: AppColors) => StyleSheet.create({
   modalCancel: { paddingHorizontal: 16, paddingVertical: 10 },
   modalSubmit: { borderRadius: radius.md, paddingHorizontal: 20, paddingVertical: 10 },
 
-  emptyState:  { alignItems: 'center', paddingVertical: 28, gap: 8 },
-  emptyIcon:   { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
-  emptyTitle:  { fontSize: 15, fontWeight: '600' },
-  emptySub:    { fontSize: 13, textAlign: 'center', paddingHorizontal: 24 },
-  recentSection: { marginHorizontal: 20, marginTop: 4 },
-  recentHeader:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  recentTitle:   { fontSize: 11, fontWeight: '700', letterSpacing: 0.8 },
-  viewAll:       { fontSize: 13, fontWeight: '600' },
+  expenseSection: { marginHorizontal: 20, marginTop: 4 },
+  expenseHeader:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  expenseHeaderTitle: { fontSize: 11, fontWeight: '700', letterSpacing: 0.8 },
+  viewAll:        { fontSize: 13, fontWeight: '600' },
 
-  entryCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg, padding: 14, marginBottom: 10, borderLeftWidth: 3,
+  emptyState: { alignItems: 'center', paddingVertical: 28, gap: 8 },
+  emptyIcon:  { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
+  emptyTitle: { fontSize: 15, fontWeight: '600' },
+  emptySub:   { fontSize: 13, textAlign: 'center', paddingHorizontal: 24 },
+
+  expenseRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    borderRadius: radius.lg, padding: 12, marginBottom: 10,
     ...shadow.card,
   },
-  entryTop:    { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
-  emotionChip: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 20 },
-  emotionTxt:  { fontSize: 11, fontWeight: '700' },
-  resultChip:  { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 20 },
-  resultTxt:   { fontSize: 11, fontWeight: '700' },
-  pnlBadge:    { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
-  pnlTxt:      { fontSize: 11, fontWeight: '700' },
-entryTime:   { marginLeft: 'auto', fontSize: 11 },
-  entrySummary:{ fontSize: 13, lineHeight: 19 },
+  expenseIcon:   { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  expenseTitle:  { fontSize: 14, fontWeight: '600' },
+  expenseSub:    { fontSize: 12, marginTop: 1 },
+  expenseAmount: { fontSize: 14, fontWeight: '700' },
+  expenseTime:   { fontSize: 11, marginTop: 1 },
 });

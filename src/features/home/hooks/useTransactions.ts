@@ -50,7 +50,10 @@ export function useTransactions() {
         }));
         setIsLoading(false);
       },
-      () => setIsLoading(false),
+      (err) => {
+        console.error('[useTransactions] onSnapshot error:', err?.code, err?.message);
+        setIsLoading(false);
+      },
     );
 
     return unsub;

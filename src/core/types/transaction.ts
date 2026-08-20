@@ -2,12 +2,15 @@
 // Mirrors the Firestore schema written by functions/src/classifyTransaction.ts
 // and functions/src/updateNetWorth.ts — keep these three in sync.
 
-// Three top-level types: money spent (EXPENSE), money coming in / held as an
-// asset (ASSET), or anything that doesn't fit either (OTHER — e.g. lending
-// money, a note-to-self, an unclear entry). `category` picks the subcategory
-// within EXPENSE/ASSET — see EXPENSE_CATEGORIES / ASSET_CATEGORIES below.
-// OTHER has no subcategories and never affects net worth.
-export type TransactionType = 'ASSET' | 'EXPENSE' | 'OTHER';
+// Four top-level types:
+// - EXPENSE — money going out (spent, paid, lost).
+// - INCOME  — money coming in that isn't already held as an investment
+//             (salary, freelance, gifts, interest, or simply cash/bank added).
+// - ASSET   — money moved into something you already hold/invest in
+//             (stocks, bonds, FD, RD, mutual funds, crypto, gold, real estate).
+// - OTHER   — anything that doesn't fit the above (lending money, a note-to-
+//             self, an unclear entry). Never affects net worth.
+export type TransactionType = 'EXPENSE' | 'INCOME' | 'ASSET' | 'OTHER';
 
 export type Emotion =
   | 'happy'
@@ -25,27 +28,30 @@ export const EXPENSE_CATEGORIES = [
   'Rent', 'Subscriptions',
 ] as const;
 
-// ASSET categories split into two flavors that net worth treats differently
-// (see ASSET_FIELD_MAP): income categories land straight in cash/bank, while
-// holding categories move money out of cash/bank into that dedicated field.
-export const ASSET_INCOME_CATEGORIES = [
+// INCOME: money coming in that isn't already an investment/holding — this
+// includes plain cash/bank additions, which credit the same net-worth field
+// a "Salary" entry would (see ASSET_FIELD_MAP). "Loan" is the one exception:
+// it still credits cash/bank, but it also adds an equal amount to
+// liabilities, since borrowed money isn't a net-worth gain (see updateNetWorth).
+export const INCOME_CATEGORIES = [
   'Salary', 'Freelance', 'Business', 'Interest', 'Dividend', 'Gift', 'Bonus', 'Refund',
+  'Cash', 'Bank/Digital Cash', 'Loan',
 ] as const;
 
-export const ASSET_HOLDING_CATEGORIES = [
-  'Cash', 'Bank/Digital Cash', 'Stocks', 'Bonds', 'FD', 'RD',
-  'Mutual Funds', 'Crypto', 'Gold', 'Real Estate',
+// ASSET: things you already hold or are investing in — a distinct holding
+// field on NetWorth, not just liquid cash.
+export const ASSET_CATEGORIES = [
+  'Stocks', 'Bonds', 'FD', 'RD', 'Mutual Funds', 'Crypto', 'Gold', 'Real Estate',
 ] as const;
-
-export const ASSET_CATEGORIES = [...ASSET_INCOME_CATEGORIES, ...ASSET_HOLDING_CATEGORIES] as const;
 
 export const EMOTIONS: Emotion[] = [
   'happy', 'neutral', 'guilty', 'stressed', 'impulsive', 'proud', 'worried', 'excited',
 ];
 
-// Maps an ASSET holding category -> the net-worth field it lives in. Income
-// categories (Salary, Freelance, …) aren't here — they credit Bank/Digital
-// Cash directly.
+// Maps a category -> the net-worth field it credits. Covers both INCOME's
+// "Cash"/"Bank/Digital Cash" categories and ASSET's holding categories.
+// Any other INCOME category (Salary, Freelance, …) credits Bank/Digital Cash
+// directly — handled by the caller, not this map.
 export const ASSET_FIELD_MAP: Record<string, keyof NetWorth> = {
   'Cash': 'cash',
   'Bank/Digital Cash': 'digitalCash',
@@ -66,7 +72,7 @@ export const ASSET_FIELD_KEYS = [
 ] as const;
 
 export function isIncomeCategory(category: string | null | undefined): boolean {
-  return !!category && (ASSET_INCOME_CATEGORIES as readonly string[]).includes(category);
+  return !!category && (INCOME_CATEGORIES as readonly string[]).includes(category);
 }
 
 export interface Transaction {
@@ -107,6 +113,7 @@ export interface NetWorth {
 
 export function categoriesForType(type: TransactionType): readonly string[] {
   if (type === 'EXPENSE') return EXPENSE_CATEGORIES;
+  if (type === 'INCOME') return INCOME_CATEGORIES;
   if (type === 'ASSET') return ASSET_CATEGORIES;
   return [];
 }

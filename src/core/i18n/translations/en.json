@@ -95,7 +95,7 @@
   "pattern": {
     "title": "Patterns",
     "subtitle": "AI analysis of your last 5 trades",
-    "subtitle_report": "AI analysis of your trading behavior",
+    "subtitle_report": "Where your money comes from and goes",
     "generating": "Generating your pattern report…",
     "no_trades_title": "No patterns yet",
     "no_trades_sub": "Log at least 5 trades to unlock pattern analysis",
@@ -142,6 +142,40 @@
     "no_entries_sub": "Record your first trade",
     "load_samples": "✨ Load sample trades",
     "upgrade_for_insights": "🔒 Upgrade for AI patterns"
+  },
+
+  "expenses": {
+    "title": "Expenses",
+    "see_all": "See All",
+    "screen_title": "All Expenses",
+    "no_entries_title": "No expenses yet",
+    "no_entries_sub": "Tap the mic and say what you spent on."
+  },
+
+  "assets": {
+    "title": "Assets",
+    "see_all": "See All",
+    "screen_title": "All Assets",
+    "no_entries_title": "No assets yet",
+    "no_entries_sub": "Tap the mic and say what you earned or invested in."
+  },
+
+  "transactions": {
+    "title": "Transactions",
+    "see_all": "See All",
+    "screen_title": "All Transactions",
+    "no_entries_title": "No transactions yet",
+    "no_entries_sub": "Tap the mic and say what happened with your money."
+  },
+
+  "budget": {
+    "title": "Monthly Budget",
+    "set_cta": "Set a monthly budget",
+    "set_cta_sub": "Track your spending against a limit",
+    "modal_title": "Monthly Budget",
+    "modal_hint": "Set how much you plan to spend this month.",
+    "placeholder": "0",
+    "save": "Save"
   },
 
   "weekly": {

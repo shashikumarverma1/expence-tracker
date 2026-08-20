@@ -27,10 +27,10 @@ import {
 
 type RouteParams = { EditTransactionScreen: { transaction: Transaction } };
 
-const TYPES: TransactionType[] = ['EXPENSE', 'ASSET', 'OTHER'];
+const TYPES: TransactionType[] = ['EXPENSE', 'INCOME', 'ASSET', 'OTHER'];
 
 const TYPE_LABEL: Record<TransactionType, string> = {
-  EXPENSE: 'Expense', ASSET: 'Asset', OTHER: 'Other',
+  EXPENSE: 'Expense', INCOME: 'Income', ASSET: 'Asset', OTHER: 'Other',
 };
 
 function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {

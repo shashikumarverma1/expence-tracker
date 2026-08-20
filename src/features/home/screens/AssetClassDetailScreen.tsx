@@ -26,8 +26,11 @@ export function AssetClassDetailScreen() {
   const { transactions, isLoading } = useTransactions();
   const { assetClass, label } = route.params;
 
+  // "Cash" and "Bank/Digital Cash" are INCOME-type categories (plain money
+  // added), while the rest (Stocks, FD, Gold, …) are ASSET-type holdings —
+  // match whichever type this assetClass's category actually belongs to.
   const filtered = transactions.filter(
-    (tx) => tx.type === 'ASSET' && tx.category === assetClass,
+    (tx) => (tx.type === 'ASSET' || tx.type === 'INCOME') && tx.category === assetClass,
   );
 
   const s = makeStyles(colors);
