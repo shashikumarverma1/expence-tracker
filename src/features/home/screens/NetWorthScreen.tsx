@@ -8,7 +8,7 @@ import { useTheme } from '../../../core/hook';
 import { AppColors, colors as brandColors, radius, shadow, formatCompactINR } from '../../../core/utils';
 import { useNetWorth } from '../hooks/useNetWorth';
 import { ASSET_FIELD_KEYS, NetWorth } from '../../../core/types/transaction';
-import { useBalanceVisibility } from '../../../core/store/balance/useBalanceVisibility';
+import { useBalanceVisibility, revealNetWorth } from '../../../core/store/balance/useBalanceVisibility';
 
 const BALANCE_MASK = '••••••';
 
@@ -47,7 +47,6 @@ export function NetWorthScreen() {
   const { colors } = useTheme();
   const { netWorth, isLoading } = useNetWorth();
   const hidden = useBalanceVisibility((st) => st.hidden);
-  const toggleHidden = useBalanceVisibility((st) => st.toggle);
   const s = makeStyles(colors);
 
   const rows = ASSET_FIELD_KEYS
@@ -80,7 +79,7 @@ export function NetWorthScreen() {
           <View style={s.totalHeaderRow}>
             <CText txt="Total Net Worth" style={s.totalLabel} />
             <TouchableOpacity
-              onPress={toggleHidden}
+              onPress={revealNetWorth}
               hitSlop={10}
               style={[s.eyeBtn, { backgroundColor: colors.primaryDim }]}
             >

@@ -27,7 +27,7 @@ import { useIsPro } from '../../subscription/hooks/useIsPro';
 import { SubscriptionModal } from '../../subscription/screens/SubscriptionModal';
 import { getExpoPushToken, saveExpoPushToken } from '../../notification/hook/expoPushToken';
 import { useAuthStore } from '../../../core/store/auth/useAuthStore';
-import { useBalanceVisibility } from '../../../core/store/balance/useBalanceVisibility';
+import { useBalanceVisibility, revealNetWorth } from '../../../core/store/balance/useBalanceVisibility';
 import { storage } from '../../../core/config/mmkv';
 
 // ─── Config ──────────────────────────────────────────────────────
@@ -63,7 +63,6 @@ function NetWorthRing({
   onSelectAsset: (assetClass: string, label: string) => void;
 }) {
   const hidden = useBalanceVisibility((s) => s.hidden);
-  const toggleHidden = useBalanceVisibility((s) => s.toggle);
   const size = 112;
   const strokeWidth = 12;
   const radius = (size - strokeWidth) / 2;
@@ -114,7 +113,7 @@ function NetWorthRing({
         <TouchableOpacity
           style={StyleSheet.absoluteFill}
           activeOpacity={0.6}
-          onPress={toggleHidden}
+          onPress={revealNetWorth}
         >
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 }}>
             <CText

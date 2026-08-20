@@ -7,7 +7,7 @@ import React, { useEffect } from 'react';
 import Toast from 'react-native-toast-message';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useAuthStore } from './src/core/store';
-import { CustomAlert } from './src/core/component';
+import { CustomAlert, PasswordPromptModal } from './src/core/component';
 import { MoneyFlowIntroScreen } from './src/features/onboarding';
 import * as Notifications from 'expo-notifications';
 import * as SplashScreen from 'expo-splash-screen';
@@ -79,6 +79,7 @@ export default function App() {
       </NavigationContainer>
       <Toast />
       <CustomAlert />
+      <PasswordPromptModal />
     </I18nextProvider>
   );
 }

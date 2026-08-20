@@ -9,7 +9,7 @@ import { AppColors, colors as brandColors, radius, shadow, formatCompactINR } fr
 import { useTransactions } from '../hooks/useTransactions';
 import { useNetWorth } from '../hooks/useNetWorth';
 import { Emotion } from '../../../core/types/transaction';
-import { useBalanceVisibility } from '../../../core/store/balance/useBalanceVisibility';
+import { useBalanceVisibility, revealNetWorth } from '../../../core/store/balance/useBalanceVisibility';
 
 const BALANCE_MASK = '••••••';
 
@@ -39,7 +39,6 @@ export function DashboardScreen() {
   const { transactions } = useTransactions();
   const { netWorth } = useNetWorth();
   const hidden = useBalanceVisibility((st) => st.hidden);
-  const toggleHidden = useBalanceVisibility((st) => st.toggle);
   const s = makeStyles(colors);
 
   const stats = useMemo(() => {
@@ -121,7 +120,7 @@ export function DashboardScreen() {
           style={[s.totalCard, { backgroundColor: colors.surface }, shadow.card]}
         >
           <TouchableOpacity
-            onPress={toggleHidden}
+            onPress={revealNetWorth}
             hitSlop={10}
             style={[s.eyeBtn, { backgroundColor: colors.primaryDim }]}
           >
