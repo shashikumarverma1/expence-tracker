@@ -1,8 +1,8 @@
 {
   "expo": {
     "name": "CashLeak",
-    "slug": "tradelog",
-    "version": "1.0.11",
+    "slug": "cashleak",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -76,7 +76,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "42df1a4f-90ce-4e4d-ab36-dccce77fb958"
+        "projectId": "d89e3927-aef7-4ee4-bcc4-8428de29d73b"
       }
     },
     "owner": "shashikumarverma",
