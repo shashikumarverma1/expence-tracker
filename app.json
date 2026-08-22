@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "TradeLog",
-    "slug": "tradelog",
-    "version": "1.0.11",
+    "name": "CashLeak",
+    "slug": "cashleak",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -42,8 +42,8 @@
       [
         "expo-speech-recognition",
         {
-          "microphonePermission": "TradeLog needs microphone access to record your voice journal entries.",
-          "speechRecognitionPermission": "TradeLog uses speech recognition to transcribe your voice journal entries."
+          "microphonePermission": "CashLeak needs microphone access to record your voice journal entries.",
+          "speechRecognitionPermission": "CashLeak uses speech recognition to transcribe your voice journal entries."
         }
       ]
     ],
@@ -53,13 +53,13 @@
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSMicrophoneUsageDescription": "TradeLog needs microphone access to record your voice journal entries.",
-        "NSSpeechRecognitionUsageDescription": "TradeLog uses speech recognition to transcribe your voice journal entries."
+        "NSMicrophoneUsageDescription": "CashLeak needs microphone access to record your voice journal entries.",
+        "NSSpeechRecognitionUsageDescription": "CashLeak uses speech recognition to transcribe your voice journal entries."
       }
     },
     "android": {
-      "package": "com.tradelog.journal",
-      "versionCode": 2,
+      "package": "com.cashleak.app",
+      "versionCode": 1,
       "softwareKeyboardLayoutMode": "resize",
       "googleServicesFile": "./google-services.json",
       "permissions": [
@@ -76,7 +76,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "42df1a4f-90ce-4e4d-ab36-dccce77fb958"
+        "projectId": "d89e3927-aef7-4ee4-bcc4-8428de29d73b"
       }
     },
     "owner": "shashikumarverma",

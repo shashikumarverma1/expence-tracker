@@ -11,22 +11,28 @@ import {
 import { useTranslation } from 'react-i18next';
 import CText from '../../../core/component/CText';
 import { useTheme } from '../../../core/hook';
-import { AppColors, colors as brandColors } from '../../../core/utils';
-import { TradeEntry, TradeResult, useTradeLog } from '../hooks/useTradeLog';
+import { AppColors, getBrandColors } from '../../../core/utils';
+import { TradeEntry, TradeResult, useTradeLog } from '../hooks/useSpendMood';
+
+type BrandColors = ReturnType<typeof getBrandColors>;
 
 // ─── Config ──────────────────────────────────────────────────────
 
-const RESULT_DOT: Record<TradeResult, string> = {
-  profit:     brandColors.green,
-  loss:       brandColors.red,
-  'no-trade': brandColors.textMuted,
-};
+function getResultDot(brandColors: BrandColors): Record<TradeResult, string> {
+  return {
+    profit:     brandColors.green,
+    loss:       brandColors.red,
+    'no-trade': brandColors.textMuted,
+  };
+}
 
-const RESULT_BG: Record<TradeResult, string> = {
-  profit:     brandColors.greenBg,
-  loss:       brandColors.redBg,
-  'no-trade': brandColors.purpleDim,
-};
+function getResultBg(brandColors: BrandColors): Record<TradeResult, string> {
+  return {
+    profit:     brandColors.greenBg,
+    loss:       brandColors.redBg,
+    'no-trade': brandColors.purpleDim,
+  };
+}
 
 // ─── Types ───────────────────────────────────────────────────────
 
@@ -92,10 +98,10 @@ function buildCalendar(year: number, month: number, trades: TradeEntry[]): CalDa
 
 // ─── Day cell ────────────────────────────────────────────────────
 
-function DayCell({ day, colors }: { day: CalDay; colors: AppColors }) {
+function DayCell({ day, colors, brandColors }: { day: CalDay; colors: AppColors; brandColors: BrandColors }) {
   if (day.date === 0) return <View style={cell.pad} />;
-  const bg  = day.net ? RESULT_BG[day.net] : 'transparent';
-  const dot = day.net ? RESULT_DOT[day.net] : null;
+  const bg  = day.net ? getResultBg(brandColors)[day.net] : 'transparent';
+  const dot = day.net ? getResultDot(brandColors)[day.net] : null;
   return (
     <View style={[cell.wrap, { backgroundColor: bg }, day.isToday && { borderColor: colors.primary, borderWidth: 2 }]}>
       {dot ? <View style={[cell.dot, { backgroundColor: dot }]} /> : <View style={[cell.emptyDot, { borderColor: colors.border }]} />}
@@ -121,7 +127,7 @@ const cell = StyleSheet.create({
 
 // ─── Monthly stats card ──────────────────────────────────────────
 
-function MonthlyStats({ trades, year, month, colors }: { trades: TradeEntry[]; year: number; month: number; colors: AppColors }) {
+function MonthlyStats({ trades, year, month, colors, brandColors }: { trades: TradeEntry[]; year: number; month: number; colors: AppColors; brandColors: BrandColors }) {
   const { t } = useTranslation();
   const stats = useMemo(() => {
     const inMonth = trades.filter((t) => {
@@ -172,7 +178,7 @@ function MonthlyStats({ trades, year, month, colors }: { trades: TradeEntry[]; y
 
 // ─── Legend ──────────────────────────────────────────────────────
 
-function Legend({ colors }: { colors: AppColors }) {
+function Legend({ colors, brandColors }: { colors: AppColors; brandColors: BrandColors }) {
   const { t } = useTranslation();
   const s = StyleSheet.create({
     card:  { marginTop: 12, backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border },
@@ -205,7 +211,7 @@ function Legend({ colors }: { colors: AppColors }) {
 // ─── TradeCalendarView ───────────────────────────────────────────
 
 export function TradeCalendarView() {
-  const { colors }            = useTheme();
+  const { colors, brand: brandColors } = useTheme();
   const { t }                 = useTranslation();
   const { trades, isLoading } = useTradeLog();
 
@@ -259,13 +265,13 @@ export function TradeCalendarView() {
       ) : (
         weeks.map((week, wi) => (
           <View key={wi} style={s.weekRow}>
-            {week.map((day, di) => <DayCell key={`${wi}-${di}`} day={day} colors={colors} />)}
+            {week.map((day, di) => <DayCell key={`${wi}-${di}`} day={day} colors={colors} brandColors={brandColors} />)}
           </View>
         ))
       )}
 
-      <MonthlyStats trades={trades} year={year} month={month} colors={colors} />
-      <Legend colors={colors} />
+      <MonthlyStats trades={trades} year={year} month={month} colors={colors} brandColors={brandColors} />
+      <Legend colors={colors} brandColors={brandColors} />
     </ScrollView>
   );
 }

@@ -73,7 +73,7 @@ export const useSettings = () => {
 
   const shareApp = () => {
     Share.share({
-      message: `Check out TradeLog! ${APP_SHARE_URL}`,
+      message: `Check out Money Flow! ${APP_SHARE_URL}`,
       url: APP_SHARE_URL, // used by iOS share sheet
     }).catch(() => {});
   };

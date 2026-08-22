@@ -66,7 +66,7 @@ export const useFirebaseStorage = () => {
   // expo-file-system uploadAsync uses the native HTTP stack and avoids this.
   // Bucket is read from the configured storage ref, not process.env, so it's
   // never undefined even if the env var isn't inlined at module-init time.
-  const uploadImage = useCallback(async (uri: string, path: string, onProgress?: (progress: number) => void) => {
+  const uploadImage = useCallback(async (uri: string, path: string, onProgress?: (progress: number) => void, contentType: string = 'image/jpeg') => {
     try {
       setUploading(true);
       setProgress(0);
@@ -85,7 +85,7 @@ export const useFirebaseStorage = () => {
         httpMethod: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'image/jpeg',
+          'Content-Type': contentType,
         },
       });
 

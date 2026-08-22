@@ -6,7 +6,6 @@ import * as React from "react";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { RootStack } from "../stack";
 import { AuthScreen, SettingsScreen, NotificationScreen, PrivacyPolicyScreen, TermsOfUseScreen } from "../../features";
-import { TradeLogOnboardingScreen } from "../../features/onboarding/screens/TradeLogOnboardingScreen";
 import { useAuthStore } from "../../core/store";
 import { useSubscriptionStore } from "../../core/store/subscription/useSubscriptionStore";
 import { useTheme } from "../../core/hook";
@@ -19,7 +18,6 @@ const Drawer = createDrawerNavigator();
 
 export function DrawerNavigation() {
   const isAuthenticated      = useAuthStore((state) => state.isAuthenticated);
-  const onboardingCompleted  = useAuthStore((state) => state.onboardingCompleted);
   const { colors } = useTheme();
 
   React.useEffect(() => {
@@ -100,11 +98,7 @@ export function DrawerNavigation() {
       }}
       drawerContent={() => <SettingsScreen />}
     >
-      {isAuthenticated && onboardingCompleted === false ? (
-        <Drawer.Screen name="Onboarding">
-          {() => <TradeLogOnboardingScreen />}
-        </Drawer.Screen>
-      ) : isAuthenticated ? (
+      {isAuthenticated ? (
         <Drawer.Screen name="Root" component={RootStack} />
       ) : (
         <Drawer.Screen name="Login">

@@ -10,25 +10,31 @@ import {
 import { useTranslation } from 'react-i18next';
 import CText from '../../../core/component/CText';
 import { useTheme } from '../../../core/hook';
-import { AppColors, colors as brandColors } from '../../../core/utils';
+import { AppColors, colors as staticBrandColors, getBrandColors } from '../../../core/utils';
 import { auth } from '../../../core/config';
-import { TradeEntry, TradeEmotion, TradeResult, setTradeResult, useTradeLog } from '../hooks/useTradeLog';
+import { TradeEntry, TradeEmotion, TradeResult, setTradeResult, useTradeLog } from '../hooks/useSpendMood';
+
+type BrandColors = ReturnType<typeof getBrandColors>;
 
 // ─── Config ──────────────────────────────────────────────────────
 
-const EMOTION_COLOR: Record<TradeEmotion, string> = {
-  Panic:   brandColors.red,
-  FOMO:    brandColors.amber,
-  Calm:    brandColors.green,
-  Revenge: brandColors.red,
-};
+function getEmotionColor(brandColors: BrandColors): Record<TradeEmotion, string> {
+  return {
+    Panic:   brandColors.red,
+    FOMO:    brandColors.amber,
+    Calm:    brandColors.green,
+    Revenge: brandColors.red,
+  };
+}
 
-const EMOTION_BG: Record<TradeEmotion, string> = {
-  Panic:   brandColors.redBg,
-  FOMO:    brandColors.amberBg,
-  Calm:    brandColors.greenBg,
-  Revenge: brandColors.redBg,
-};
+function getEmotionBg(brandColors: BrandColors): Record<TradeEmotion, string> {
+  return {
+    Panic:   brandColors.redBg,
+    FOMO:    brandColors.amberBg,
+    Calm:    brandColors.greenBg,
+    Revenge: brandColors.redBg,
+  };
+}
 
 const ALL_RESULTS: TradeResult[] = ['profit', 'loss', 'no-trade'];
 
@@ -54,13 +60,13 @@ function formatTime(ts: number): string {
 
 // ─── Entry card ──────────────────────────────────────────────────
 
-function TradeCard({ entry, colors, onResultChange }: {
-  entry: TradeEntry; colors: AppColors; onResultChange: (id: string, r: TradeResult) => void;
+function TradeCard({ entry, colors, brandColors, onResultChange }: {
+  entry: TradeEntry; colors: AppColors; brandColors: BrandColors; onResultChange: (id: string, r: TradeResult) => void;
 }) {
   const { t }        = useTranslation();
   const s            = makeStyles(colors);
-  const emotionColor = EMOTION_COLOR[entry.emotion] ?? brandColors.purple;
-  const emotionBg    = EMOTION_BG[entry.emotion]   ?? brandColors.purpleDim;
+  const emotionColor = getEmotionColor(brandColors)[entry.emotion] ?? brandColors.purple;
+  const emotionBg    = getEmotionBg(brandColors)[entry.emotion]   ?? brandColors.purpleDim;
   const createdMs    = entry.createdAt?.toMillis?.() ?? 0;
 
   const RESULT_CFG: Record<TradeResult, { label: string; bg: string; text: string; icon: string }> = {
@@ -122,7 +128,7 @@ function TradeCard({ entry, colors, onResultChange }: {
 // ─── TradeListView ───────────────────────────────────────────────
 
 export function TradeListView() {
-  const { colors }            = useTheme();
+  const { colors, brand: brandColors } = useTheme();
   const { t }                 = useTranslation();
   const { trades, isLoading } = useTradeLog();
   const uid                   = auth.currentUser?.uid;
@@ -224,7 +230,7 @@ export function TradeListView() {
             </View>
           )}
           renderItem={({ item }) => (
-            <TradeCard entry={item} colors={colors} onResultChange={handleResultChange} />
+            <TradeCard entry={item} colors={colors} brandColors={brandColors} onResultChange={handleResultChange} />
           )}
           ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
         />
@@ -250,7 +256,7 @@ const makeStyles = (colors: AppColors) => StyleSheet.create({
   card: {
     backgroundColor: colors.surface, borderRadius: 14, padding: 14,
     borderLeftWidth: 3, borderWidth: 1, borderColor: colors.border,
-    shadowColor: brandColors.purple, shadowOffset: { width: 0, height: 2 },
+    shadowColor: staticBrandColors.purple, shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
   },
   cardTop:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },

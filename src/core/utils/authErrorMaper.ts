@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { FirebaseAuthError } from '../enum/eFireBaseAuthErr';
+import { FirebaseAuthError } from '../enum/eFireBaseAuthErrors';
 
 export function getAuthErrorMessage(error: any): string {
     const code: string = error?.code ?? '';

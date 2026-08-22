@@ -3,12 +3,10 @@ import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -29,7 +27,9 @@ import Animated, {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { createAudioPlayer } from 'expo-audio';
 import { useTheme } from '../../../core/hook';
-import { AppColors, colors as brandColors } from '../../../core/utils';
+import { AppColors, getBrandColors } from '../../../core/utils';
+
+type BrandColors = ReturnType<typeof getBrandColors>;
 import { RecordingState, useRecording } from '../hooks/useRecording';
 // ── Helpers ───────────────────────────────────────────────────
 function formatTimer(secs: number): string {
@@ -130,16 +130,16 @@ function PulseRing({ color, delay }: { color: string; delay: number }) {
 }
 
 // ── Main circle button ────────────────────────────────────────
-const BTN_BG = (colors: AppColors): Record<RecordingState, string> => ({
+const BTN_BG = (colors: AppColors, brandColors: BrandColors): Record<RecordingState, string> => ({
   idle:      brandColors.micBlueDark,
   recording: colors.error,
   stopped:   colors.success,
 });
 
 function CircleButton({ state, onPress }: { state: RecordingState; onPress: () => void }) {
-  const { colors } = useTheme();
+  const { colors, brand: brandColors } = useTheme();
   const s          = makeStyles(colors);
-  const bg         = BTN_BG(colors);
+  const bg         = BTN_BG(colors, brandColors);
   const pulseColor = state === 'idle' ? brandColors.micBlue : bg[state];
 
   return (
@@ -156,7 +156,7 @@ function CircleButton({ state, onPress }: { state: RecordingState; onPress: () =
         {state === 'stopped' ? (
           <Ionicons name="checkmark" size={38} color="#fff" />
         ) : (
-          <Ionicons name="mic" size={38} color={state === 'idle' ? brandColors.micBlue : '#fff'} />
+          <Ionicons name="mic" size={38} color={state === 'idle' ? (brandColors.micBlue) : '#fff'} />
         )}
       </TouchableOpacity>
     </View>
@@ -167,18 +167,12 @@ function CircleButton({ state, onPress }: { state: RecordingState; onPress: () =
 function TranscriptCard({
   text,
   isTranscribing,
-  onEdit,
 }: {
   text: string | null;
   isTranscribing: boolean;
-  onEdit: (updated: string) => void;
 }) {
-  const { colors }             = useTheme();
-  const s                      = makeStyles(colors);
-  const [editing, setEditing]  = useState(false);
-  const [draft,   setDraft]    = useState(text ?? '');
-
-  useEffect(() => { setDraft(text ?? ''); }, [text]);
+  const { colors } = useTheme();
+  const s           = makeStyles(colors);
 
   if (isTranscribing) {
     return <CLoading visible tx="record_screen.transcribing" variant="compact" />;
@@ -188,31 +182,8 @@ function TranscriptCard({
 
   return (
     <View style={s.transcriptCard}>
-      <View style={s.transcriptHeader}>
-        <CText tx="record_screen.your_words" style={s.transcriptLabel} />
-        <TouchableOpacity
-          onPress={() => {
-            if (editing) { onEdit(draft); setEditing(false); }
-            else setEditing(true);
-          }}
-          hitSlop={10}
-        >
-          <CText tx={editing ? 'record_screen.done' : 'record_screen.edit'} style={s.editBtn} />
-        </TouchableOpacity>
-      </View>
-
-      {editing ? (
-        <TextInput
-          style={s.transcriptInput}
-          value={draft}
-          onChangeText={setDraft}
-          multiline
-          autoFocus
-          onSubmitEditing={() => { onEdit(draft); setEditing(false); Keyboard.dismiss(); }}
-        />
-      ) : (
-        <CText txt={text} style={s.transcriptText} />
-      )}
+      <CText tx="record_screen.your_words" style={s.transcriptLabel} />
+      <CText txt={text} style={s.transcriptText} />
     </View>
   );
 }
@@ -336,7 +307,6 @@ export function RecordScreen() {
     stopRecording,
     reset,
     openSettings,
-    setTranscript,
   } = useRecording();
 
   const [dateStr] = useState(formatDateTime);
@@ -368,7 +338,7 @@ export function RecordScreen() {
 
   const handleContinue = () => {
     if (!transcript) return; // guard — button is already disabled, but safety-first
-    nav.navigate('TradeEntryDetailScreen', { audioUri });
+    nav.navigate('ConfirmTransactionScreen', { audioUri, transcript });
   };
 
   return (
@@ -452,7 +422,6 @@ export function RecordScreen() {
                 <TranscriptCard
                   text={transcript}
                   isTranscribing={isTranscribing}
-                  onEdit={setTranscript}
                 />
               )}
 
@@ -546,11 +515,8 @@ const makeStyles = (colors: AppColors) => StyleSheet.create({
   livePreviewText:  { fontSize: 14, color: colors.text, lineHeight: 22 },
 
   transcriptCard:   { width: '100%', backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginTop: 20, borderWidth: 1, borderColor: colors.border, shadowColor: colors.primary, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2, alignItems: 'center' },
-  transcriptHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: 10 },
-  transcriptLabel:  { fontSize: 12, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.8 },
-  editBtn:          { fontSize: 13, fontWeight: '600', color: colors.primary },
+  transcriptLabel:  { fontSize: 12, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.8, alignSelf: 'flex-start', marginBottom: 10 },
   transcriptText:   { fontSize: 15, color: colors.text, lineHeight: 24, width: '100%' },
-  transcriptInput:  { fontSize: 15, color: colors.text, lineHeight: 24, width: '100%', minHeight: 80 },
   transcribingTxt:  { fontSize: 14, color: colors.textMuted, marginTop: 10 },
 
   actionRow:   { flexDirection: 'row', gap: 12, width: '100%', marginTop: 20 },

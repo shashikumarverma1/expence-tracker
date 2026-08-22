@@ -1,0 +1,269 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { httpsCallable } from 'firebase/functions';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import CText from '../../../core/component/CText';
+import { useTheme, useFirebaseStorage } from '../../../core/hook';
+import { AppColors, colors as staticBrandColors, radius } from '../../../core/utils';
+import { fbFunctions, auth } from '../../../core/config/firebase';
+import { confirmTransaction } from '../hooks/useTransactions';
+import {
+  categoriesForType,
+  EMOTIONS,
+  Emotion,
+  TransactionType,
+} from '../../../core/types/transaction';
+
+type RouteParams = { ConfirmTransactionScreen: { audioUri?: string; transcript: string } };
+
+const TYPES: TransactionType[] = ['EXPENSE', 'INCOME', 'ASSET'];
+
+const TYPE_LABEL: Record<TransactionType, string> = {
+  EXPENSE: 'Expense', INCOME: 'Income', ASSET: 'Asset', OTHER: 'Other',
+};
+
+const CURRENCY_SYMBOL: Record<string, string> = { INR: '₹', USD: '$', EUR: '€', GBP: '£' };
+
+interface ClassifyResult {
+  id: string;
+  type: TransactionType;
+  amount: number;
+  currency: string;
+  category: string | null;
+  emotion: Emotion;
+  confidence: number;
+  raw_summary: string;
+  needsConfirmation: boolean;
+}
+
+function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  const { colors } = useTheme();
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      style={[
+        styles.chip,
+        { borderColor: colors.border, backgroundColor: active ? colors.primary : colors.surface },
+      ]}
+    >
+      <CText txt={label} style={[styles.chipTxt, { color: active ? '#fff' : colors.text }]} />
+    </TouchableOpacity>
+  );
+}
+
+export function ConfirmTransactionScreen() {
+  const nav = useNavigation<any>();
+  const route = useRoute<RouteProp<RouteParams, 'ConfirmTransactionScreen'>>();
+  const { colors, brand: brandColors } = useTheme();
+  const { transcript, audioUri } = route.params;
+  const { uploadImage } = useFirebaseStorage();
+
+  const [isClassifying, setIsClassifying] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [docId, setDocId] = useState<string | null>(null);
+
+  const [type, setType] = useState<TransactionType>('EXPENSE');
+  const [amount, setAmount] = useState('');
+  const [currency, setCurrency] = useState('INR');
+  const [category, setCategory] = useState<string | null>(null);
+  const [emotion, setEmotion] = useState<Emotion>('neutral');
+  const [rawSummary, setRawSummary] = useState('');
+  const [confidence, setConfidence] = useState(1);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        // Upload the recording (if any) before classifying, so it's linked
+        // on the transaction doc for playback later — best-effort, a failed
+        // upload shouldn't block classification/saving the entry.
+        let audioUrl: string | null = null;
+        if (audioUri) {
+          const uid = auth.currentUser?.uid;
+          if (uid) {
+            const ext = audioUri.split('.').pop()?.split('?')[0] || 'm4a';
+            audioUrl = await uploadImage(
+              audioUri,
+              `voiceRecordings/${uid}/${Date.now()}.${ext}`,
+              undefined,
+              'audio/m4a',
+            );
+          }
+        }
+
+        const classify = httpsCallable<{ transcript: string; audioUrl: string | null }, ClassifyResult>(
+          fbFunctions, 'classifyTransaction',
+        );
+        const res = await classify({ transcript, audioUrl });
+        const d = res.data;
+        setDocId(d.id);
+        setType(d.type);
+        setAmount(typeof d.amount === 'number' && !isNaN(d.amount) ? String(d.amount) : '');
+        setCurrency(d.currency || 'INR');
+        setCategory(d.category);
+        setEmotion(d.emotion ?? 'neutral');
+        setRawSummary(d.raw_summary ?? '');
+        setConfidence(d.confidence ?? 0);
+      } catch (e: any) {
+        setError(e?.message ?? 'Could not classify this entry — you can still fill it in manually.');
+      } finally {
+        setIsClassifying(false);
+      }
+    })();
+  }, [transcript]);
+
+  const handleSave = async () => {
+    const amt = parseFloat(amount);
+    if (!docId || isNaN(amt) || amt <= 0) return;
+    setIsSaving(true);
+    try {
+      await Promise.race([
+        confirmTransaction(docId, {
+          type,
+          amount: amt,
+          currency,
+          category,
+          emotion,
+          rawSummary,
+        }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Taking too long — check your connection and try again.')), 15000),
+        ),
+      ]);
+      // This screen lives in the root stack (sibling to the tab navigator),
+      // not inside HomeStack — 'HomeScreen' isn't a route at this level.
+      // Navigate back to the tab navigator itself, which returns to whatever
+      // screen was showing (Home, by default).
+      nav.navigate('MainTabs');
+      setIsSaving(false);
+    } catch (e: any) {
+      setError(e?.message ?? 'Could not save this entry.');
+      setIsSaving(false);
+    }
+  };
+
+  const styles2 = makeStyles(colors, brandColors);
+
+  return (
+    <SafeAreaView style={styles2.safe}>
+      <View style={styles2.topBar}>
+        <TouchableOpacity onPress={() => nav.goBack()} hitSlop={12}>
+          <Ionicons name="close" size={24} color={colors.text} />
+        </TouchableOpacity>
+        <CText txt="Confirm Entry" style={styles2.title} />
+        <View style={{ width: 24 }} />
+      </View>
+
+      {isClassifying ? (
+        <View style={styles2.center}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <CText txt="Reading your entry…" style={styles2.centerTxt} />
+        </View>
+      ) : (
+        <KeyboardAvoidingView style={styles2.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <ScrollView contentContainerStyle={styles2.scroll} keyboardShouldPersistTaps="handled">
+            {error && <CText txt={error} style={styles2.errorTxt} />}
+            {confidence < 0.5 && (
+              <View style={styles2.warnBanner}>
+                <Ionicons name="alert-circle-outline" size={16} color={brandColors.amberText} />
+                <CText txt="Low confidence — please review before saving." style={styles2.warnTxt} />
+              </View>
+            )}
+
+            <CText txt={`"${transcript}"`} style={styles2.transcript} numberOfLines={3} />
+
+            <CText txt="Type" style={styles2.label} />
+            <View style={styles2.chipRow}>
+              {TYPES.map((tp) => (
+                <Chip
+                  key={tp}
+                  label={TYPE_LABEL[tp]}
+                  active={type === tp}
+                  onPress={() => { setType(tp); setCategory(null); }}
+                />
+              ))}
+            </View>
+            {type === 'ASSET' && (
+              <CText
+                txt="Assets (stocks, gold, FD, etc.) add to your net worth — they aren't counted as income or expense."
+                style={styles2.hintTxt}
+              />
+            )}
+
+            <CText txt={`Amount (${CURRENCY_SYMBOL[currency] ?? currency})`} style={styles2.label} />
+            <TextInput
+              value={amount}
+              onChangeText={setAmount}
+              keyboardType="decimal-pad"
+              placeholder="0"
+              placeholderTextColor={colors.textMuted}
+              style={styles2.input}
+            />
+
+            {categoriesForType(type).length > 0 && (
+              <>
+                <CText txt="Category" style={styles2.label} />
+                <View style={styles2.chipRow}>
+                  {categoriesForType(type).map((c) => (
+                    <Chip key={c} label={c} active={category === c} onPress={() => setCategory(c)} />
+                  ))}
+                </View>
+              </>
+            )}
+
+            <CText txt="Emotion" style={styles2.label} />
+            <View style={styles2.chipRow}>
+              {EMOTIONS.map((e) => (
+                <Chip key={e} label={e} active={emotion === e} onPress={() => setEmotion(e)} />
+              ))}
+            </View>
+
+            <TouchableOpacity
+              style={[styles2.saveBtn, (isSaving || !amount) && { opacity: 0.6 }]}
+              onPress={handleSave}
+              disabled={isSaving || !amount}
+            >
+              {isSaving ? <ActivityIndicator size="small" color="#fff" /> : <CText txt="Save" style={styles2.saveTxt} />}
+            </TouchableOpacity>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      )}
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1, marginRight: 8, marginBottom: 8 },
+  chipTxt: { fontSize: 13, fontWeight: '600' },
+});
+
+const makeStyles = (colors: AppColors, brandColors: typeof staticBrandColors) => StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.background },
+  flex: { flex: 1 },
+  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
+  title: { fontSize: 17, fontWeight: '600', color: colors.text },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
+  centerTxt: { fontSize: 14, color: colors.textMuted },
+  scroll: { padding: 20, paddingBottom: 60 },
+  errorTxt: { color: colors.error, fontSize: 13, marginBottom: 12 },
+  warnBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: brandColors.amberBg, borderRadius: radius.md, padding: 10, marginBottom: 14 },
+  warnTxt: { fontSize: 12, color: brandColors.amberText, flex: 1 },
+  transcript: { fontSize: 14, color: colors.textMuted, fontStyle: 'italic', marginBottom: 20, lineHeight: 20 },
+  label: { fontSize: 12, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8, marginTop: 4 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 },
+  hintTxt: { fontSize: 12, color: colors.textMuted, lineHeight: 17, marginTop: -2, marginBottom: 10 },
+  input: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: 12, fontSize: 15, color: colors.text, backgroundColor: colors.surface, marginBottom: 8 },
+  saveBtn: { marginTop: 24, backgroundColor: colors.primary, borderRadius: radius.md, paddingVertical: 15, alignItems: 'center' },
+  saveTxt: { color: '#fff', fontSize: 16, fontWeight: '700' },
+});

@@ -95,7 +95,7 @@
   "pattern": {
     "title": "Patterns",
     "subtitle": "AI analysis of your last 5 trades",
-    "subtitle_report": "AI analysis of your trading behavior",
+    "subtitle_report": "Where your money comes from and goes",
     "generating": "Generating your pattern report…",
     "no_trades_title": "No patterns yet",
     "no_trades_sub": "Log at least 5 trades to unlock pattern analysis",
@@ -144,6 +144,40 @@
     "upgrade_for_insights": "🔒 Upgrade for AI patterns"
   },
 
+  "expenses": {
+    "title": "Expenses",
+    "see_all": "See All",
+    "screen_title": "All Expenses",
+    "no_entries_title": "No expenses yet",
+    "no_entries_sub": "Tap the mic and say what you spent on."
+  },
+
+  "assets": {
+    "title": "Assets",
+    "see_all": "See All",
+    "screen_title": "All Assets",
+    "no_entries_title": "No assets yet",
+    "no_entries_sub": "Tap the mic and say what you earned or invested in."
+  },
+
+  "transactions": {
+    "title": "Transactions",
+    "see_all": "See All",
+    "screen_title": "All Transactions",
+    "no_entries_title": "No transactions yet",
+    "no_entries_sub": "Tap the mic and say what happened with your money."
+  },
+
+  "budget": {
+    "title": "Monthly Budget",
+    "set_cta": "Set a monthly budget",
+    "set_cta_sub": "Track your spending against a limit",
+    "modal_title": "Monthly Budget",
+    "modal_hint": "Set how much you plan to spend this month.",
+    "placeholder": "0",
+    "save": "Save"
+  },
+
   "weekly": {
     "title": "This Week",
     "view_calendar": "View Calendar",
@@ -155,7 +189,7 @@
   },
 
   "record_screen": {
-    "title": "Log Trade",
+    "title": "Log Entry",
     "discard_title": "Discard this recording?",
     "discard_recording": "Your recording will be lost.",
     "discard_transcript": "Your transcript will be lost.",
@@ -164,12 +198,12 @@
     "tap_to_start": "Tap to start recording",
     "recording": "Recording…",
     "processing": "Processing…",
-    "speak_freely": "Talk about your trade. AI will understand.",
+    "speak_freely": "Talk about what happened with your money. AI will understand.",
     "tap_to_stop": "Tap to stop",
     "your_words": "Your words:",
     "edit": "Edit",
     "done": "Done",
-    "tips": "Speak for 30+ seconds to unlock deeper AI insights about your trading psychology",
+    "tips": "Speak for 30+ seconds to unlock deeper AI insights about your spending habits",
     "live_preview": "Live preview",
     "preview_recording": "Preview recording",
     "preparing_audio": "Preparing audio…",
@@ -177,7 +211,7 @@
     "re_record": "Re-record",
     "continue": "Continue →",
     "mic_needed_title": "Microphone access needed",
-    "mic_needed_sub": "Please enable microphone access in Settings to record your trades.",
+    "mic_needed_sub": "Please enable microphone access in Settings to record your entries.",
     "open_settings": "Open Settings"
   },
 
@@ -265,7 +299,7 @@
     "next": "Next",
     "continue": "Continue",
     "get_started": "Get Started",
-    "welcome_title": "Welcome to TradeLog",
+    "welcome_title": "Welcome to Money Flow",
     "market_question": "What do you trade?",
     "market_sub": "Pick your primary market",
     "broker_step": "Step 2 of 2",
@@ -278,7 +312,7 @@
     "slide2_sub": "AI finds emotional patterns\nfrom your last 5 trades.",
     "slide3_title": "Trade Smarter",
     "slide3_sub": "Track P&L, emotions, and\nresults in one place.",
-    "paywall_title": "Unlock full TradeLog",
+    "paywall_title": "Unlock full Money Flow",
     "paywall_sub": "Unlimited trades, AI pattern reports, and detailed psychology insights.",
     "paywall_see_plans": "See Plans",
     "paywall_free": "Continue free (10 trades)"
@@ -386,7 +420,7 @@
 
   "subscription": {
     "title": "Upgrade to Pro",
-    "subtitle": "Unlock the full TradeLog experience",
+    "subtitle": "Unlock the full Money Flow experience",
     "toggle_subscribe": "Subscribe",
     "toggle_buy_once": "Buy Once",
     "btn_subscribe": "Subscribe for {{price}}",
@@ -399,7 +433,7 @@
     "no_offerings_msg": "Unable to load subscription plans. Please try again later.",
     "success_title": "You're all set! 🎉",
     "success_subscription": "Your subscription is now active. Enjoy all Pro features!",
-    "success_one_time": "Purchase complete. Enjoy your TradeLog upgrade!",
+    "success_one_time": "Purchase complete. Enjoy your Money Flow upgrade!",
     "purchase_failed": "Purchase Failed",
     "restore_title": "Purchases Restored",
     "restore_success": "Your purchases have been restored successfully.",

@@ -35,6 +35,27 @@ export const colors = {
   warningLight: '#FFFBEB',
 };
 
+export const darkBrandColors: Partial<typeof colors> = {
+  red: '#FF6B8A',
+  redBg: '#3A1620',
+  redText: '#FF8FA3',
+  green: '#3DD68C',
+  greenBg: '#123524',
+  greenText: '#4ADE9D',
+  amber: '#FFB547',
+  amberBg: '#3A2C0E',
+  amberText: '#FFC966',
+  blue: '#47C8F5',
+  blueBg: '#0F2C3A',
+  blueText: '#7DD8FA',
+  micBlue: '#60A5FA',
+  micBlueDark: '#1E2A45',
+};
+
+export function getBrandColors(mode: 'light' | 'dark') {
+  return mode === 'dark' ? { ...colors, ...darkBrandColors } : colors;
+}
+
 export const lightColors = {
   primary:      '#6B5CE7',
   primaryLight: '#8B7CF8',

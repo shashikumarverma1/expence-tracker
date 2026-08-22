@@ -1,6 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { colors as brandColors, font, radius, shadow } from '../../../core/utils';
+import { getBrandColors, font, radius, shadow } from '../../../core/utils';
+
+type BrandColors = ReturnType<typeof getBrandColors>;
 import React, { useEffect, useState, useRef } from 'react';
 import {
   ActivityIndicator,
@@ -21,7 +23,7 @@ import { AppColors } from '../../../core/utils';
 import {
   collection, addDoc, doc, updateDoc, increment, serverTimestamp,
 } from 'firebase/firestore';
-import { TradeResult, useTradeLog } from '../hooks/useTradeLog';
+import { TradeResult, useTradeLog } from '../hooks/useSpendMood';
 import { useIsPro } from '../../subscription/hooks/useIsPro';
 import { SubscriptionModal } from '../../subscription/screens/SubscriptionModal';
 import { db } from '../../../core/config/firebase';
@@ -42,12 +44,14 @@ const VALID_CURRENCIES: Currency[] = ['INR', 'USD', 'EUR', 'GBP'];
 
 const CURRENCY_SYMBOL: Record<Currency, string> = { INR: '₹', USD: '$', EUR: '€', GBP: '£' };
 
-const EMOTION_STYLE: Record<Emotion, { bg: string; text: string }> = {
-  Panic:   { bg: brandColors.redBg,   text: brandColors.redText   },
-  FOMO:    { bg: brandColors.amberBg, text: brandColors.amberText },
-  Calm:    { bg: brandColors.greenBg, text: brandColors.greenText },
-  Revenge: { bg: brandColors.redBg,   text: brandColors.red       },
-};
+function getEmotionStyle(brandColors: BrandColors): Record<Emotion, { bg: string; text: string }> {
+  return {
+    Panic:   { bg: brandColors.redBg,   text: brandColors.redText   },
+    FOMO:    { bg: brandColors.amberBg, text: brandColors.amberText },
+    Calm:    { bg: brandColors.greenBg, text: brandColors.greenText },
+    Revenge: { bg: brandColors.redBg,   text: brandColors.red       },
+  };
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────
 
@@ -164,7 +168,8 @@ export function TradeEntryDetailScreen() {
   const nav      = useNavigation<any>();
   const route    = useRoute<RouteProp<RouteParams, 'TradeEntryDetailScreen'>>();
   const uid      = useAuthStore((s) => s.user?.uid);
-  const { colors } = useTheme();
+  const { colors, brand: brandColors } = useTheme();
+  const EMOTION_STYLE = getEmotionStyle(brandColors);
   const { t }    = useTranslation();
 
   const { audioUri, transcription: routeTranscription } = route.params ?? {};

@@ -2,13 +2,13 @@ import { NavigationContainer } from '@react-navigation/native';
 import { I18nextProvider } from 'react-i18next';
 import i18n from './src/core/i18n';
 import { useInitielize, useTheme } from './src/core/hook';
-import { DrawerNavigation, navigationRef } from './src/navigation'; 
+import { DrawerNavigation, navigationRef } from './src/navigation';
 import React, { useEffect } from 'react';
 import Toast from 'react-native-toast-message';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useAuthStore } from './src/core/store';
-import { CustomAlert } from './src/core/component';
-import { TradeLogOnboardingScreen } from './src/features/onboarding';
+import { CustomAlert, PasswordPromptModal } from './src/core/component';
+import { MoneyFlowIntroScreen } from './src/features/onboarding';
 import * as Notifications from 'expo-notifications';
 import * as SplashScreen from 'expo-splash-screen';
 import { AppColors } from './src/core/utils';
@@ -37,9 +37,12 @@ function AppContent() {
     }
   }, [isAuthLoading]);
 
-  // Show onboarding only after auth has fully resolved and user is a first-timer
-  const showOnboarding = !isAuthLoading && isAuthenticated && onboardingCompleted === false;
- const styles     = makeStyles(colors);
+  // Feature-tour intro — tracked in Firestore (users/{uid}.onboardingCompleted),
+  // not on-device, so it follows the account rather than the install. That
+  // means it can only show once we know who's logged in.
+  const showAppIntro = !isAuthLoading && isAuthenticated && onboardingCompleted === false;
+
+  const styles = makeStyles(colors);
   return (
     <View style={styles.root}>
       {/*
@@ -56,10 +59,10 @@ function AppContent() {
         </View>
       )}
 
-      {/* Full-screen onboarding overlay for first-time users */}
-      {showOnboarding && (
+      {/* Full-screen feature tour for accounts that haven't completed it */}
+      {showAppIntro && (
         <View style={StyleSheet.absoluteFill}>
-          <TradeLogOnboardingScreen />
+          <MoneyFlowIntroScreen onDone={() => {}} />
         </View>
       )}
     </View>
@@ -76,6 +79,7 @@ export default function App() {
       </NavigationContainer>
       <Toast />
       <CustomAlert />
+      <PasswordPromptModal />
     </I18nextProvider>
   );
 }

@@ -20,11 +20,25 @@ export async function transcribeWithWhisper(audioUri: string): Promise<string | 
       uploadType: UploadType.MULTIPART,
       fieldName:  'file',
       mimeType:   'audio/m4a',
-      parameters: { model: 'whisper-1' },
+      parameters: {
+        model: 'whisper-1',
+        // Force Roman script — without a language hint, Whisper auto-detects
+        // spoken Hindi and transcribes in Devanagari, which the classifier
+        // prompt (Hinglish examples like "maine 50000 salary mili") can't
+        // read. "language: en" + a Hinglish-styled prompt keeps output in
+        // English/Hinglish Roman script even for Hindi speech.
+        language: 'en',
+        prompt: 'Transcribe in English or Hinglish (Hindi written in Roman/English letters), never in Devanagari script. For example: "maine 500 rupaye kharch kiye" not "मैंने 500 रुपये खर्च किए".',
+      },
       headers:    { Authorization: `Bearer ${apiKey}` },
     });
 
-    const result = await task.uploadAsync();
+    const result = await Promise.race([
+      task.uploadAsync(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Whisper upload timed out')), 20000),
+      ),
+    ]);
 
     if (result.status !== 200) {
       console.warn('[Whisper] API error:', result.status, result.body);
