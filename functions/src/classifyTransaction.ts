@@ -10,7 +10,7 @@ const SYSTEM_PROMPT = `You are a financial transaction classifier for a voice-ba
 Classify into exactly one type:
 - "EXPENSE" — money going out: spent, paid, or lost ("kharch kiya", "spent", "paid for", "lost", "gaya/gayi") — does not create a lasting asset
 - "INCOME" — money coming in that isn't already an investment/holding: salary, freelance payment, business income, interest, dividend, gift, bonus, refund ("kamaya", "mila", "earned", "received") — OR simply adding cash/bank balance you now have in hand — OR a formal loan/borrowing received (bank loan, personal loan) — category "Loan"
-- "ASSET" — money moved into something the user already holds or is investing in: stocks, bonds, FD, RD, mutual funds, crypto, gold, real estate ("khareeda", "invest kiya", "FD me dala")
+- "ASSET" — money moved into something the user already holds or is investing in: stocks, bonds, FD, RD, mutual funds, crypto, gold, real estate ("khareeda", "invest kiya", "FD me dala") — this also includes simply stating an existing holding/balance in one of these instruments ("I had 5000 stock", "I have 25000 in FD", "mere paas 10000 ka gold hai") — treat this the same as ASSET with high confidence, do NOT classify it as OTHER just because no buy verb was used
 - "OTHER" — doesn't fit the above: lending money to someone, informally borrowing from a friend/family (not a bank/formal loan), a reminder/note-to-self about money, or anything genuinely ambiguous. Use this rarely — only when nothing else applies.
 
 Rule of thumb: "spent"/"lost"/"paid"/"kharch"/"gaya" → EXPENSE. "earned"/"got paid"/"mila"/added cash or bank balance/took a formal loan → INCOME. Bought/put money into stocks, FD, gold, crypto, real estate, etc. → ASSET. Everything else unclear → OTHER.
@@ -85,6 +85,12 @@ Output: {"type":"EXPENSE","amount":0,"currency":"INR","category":"Shopping","emo
 Input: "20000 FD me dala"
 Output: {"type":"ASSET","amount":20000,"currency":"INR","category":"FD","emotion":"neutral","confidence":0.9,"raw_summary":"Put 20000 into an FD"}
 
+Input: "I had 5000 stock"
+Output: {"type":"ASSET","amount":5000,"currency":"INR","category":"Stocks","emotion":"neutral","confidence":0.85,"raw_summary":"Holding 5000 in stocks"}
+
+Input: "I had 25000 fd"
+Output: {"type":"ASSET","amount":25000,"currency":"INR","category":"FD","emotion":"neutral","confidence":0.85,"raw_summary":"Holding 25000 in an FD"}
+
 Input: "I earned 10 rupee"
 Output: {"type":"INCOME","amount":10,"currency":"INR","category":"Business","emotion":"happy","confidence":0.7,"raw_summary":"Earned 10 rupees"}
 
@@ -151,7 +157,14 @@ function parseClassification(raw: string): ClassifiedFields | null {
     const content = json.choices?.[0]?.message?.content as string | undefined;
     if (!content) return null;
     const parsed = JSON.parse(stripFences(content));
-    if (!parsed.type || typeof parsed.amount !== 'number') return null;
+    // The model is instructed to return `amount` as a JSON number, but
+    // occasionally returns it as a numeric string (e.g. "5000") instead —
+    // coerce rather than discarding an otherwise-valid classification.
+    if (typeof parsed.amount === 'string' && parsed.amount.trim() !== '') {
+      const n = Number(parsed.amount.replace(/[,₹$€£\s]/g, ''));
+      if (!isNaN(n)) parsed.amount = n;
+    }
+    if (!parsed.type || typeof parsed.amount !== 'number' || isNaN(parsed.amount)) return null;
     return parsed as ClassifiedFields;
   } catch {
     return null;

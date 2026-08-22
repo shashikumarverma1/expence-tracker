@@ -128,19 +128,25 @@ export function ConfirmTransactionScreen() {
     if (!docId || isNaN(amt) || amt <= 0) return;
     setIsSaving(true);
     try {
-      await confirmTransaction(docId, {
-        type,
-        amount: amt,
-        currency,
-        category,
-        emotion,
-        rawSummary,
-      });
+      await Promise.race([
+        confirmTransaction(docId, {
+          type,
+          amount: amt,
+          currency,
+          category,
+          emotion,
+          rawSummary,
+        }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Taking too long — check your connection and try again.')), 15000),
+        ),
+      ]);
       // This screen lives in the root stack (sibling to the tab navigator),
       // not inside HomeStack — 'HomeScreen' isn't a route at this level.
       // Navigate back to the tab navigator itself, which returns to whatever
       // screen was showing (Home, by default).
       nav.navigate('MainTabs');
+      setIsSaving(false);
     } catch (e: any) {
       setError(e?.message ?? 'Could not save this entry.');
       setIsSaving(false);

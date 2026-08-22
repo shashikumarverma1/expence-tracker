@@ -33,7 +33,12 @@ export async function transcribeWithWhisper(audioUri: string): Promise<string | 
       headers:    { Authorization: `Bearer ${apiKey}` },
     });
 
-    const result = await task.uploadAsync();
+    const result = await Promise.race([
+      task.uploadAsync(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Whisper upload timed out')), 20000),
+      ),
+    ]);
 
     if (result.status !== 200) {
       console.warn('[Whisper] API error:', result.status, result.body);
