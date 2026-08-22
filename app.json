@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Money Flow",
+    "name": "CashLeak",
     "slug": "tradelog",
     "version": "1.0.11",
     "orientation": "portrait",
@@ -42,8 +42,8 @@
       [
         "expo-speech-recognition",
         {
-          "microphonePermission": "Money Flow needs microphone access to record your voice journal entries.",
-          "speechRecognitionPermission": "Money Flow uses speech recognition to transcribe your voice journal entries."
+          "microphonePermission": "CashLeak needs microphone access to record your voice journal entries.",
+          "speechRecognitionPermission": "CashLeak uses speech recognition to transcribe your voice journal entries."
         }
       ]
     ],
@@ -53,8 +53,8 @@
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSMicrophoneUsageDescription": "Money Flow needs microphone access to record your voice journal entries.",
-        "NSSpeechRecognitionUsageDescription": "Money Flow uses speech recognition to transcribe your voice journal entries."
+        "NSMicrophoneUsageDescription": "CashLeak needs microphone access to record your voice journal entries.",
+        "NSSpeechRecognitionUsageDescription": "CashLeak uses speech recognition to transcribe your voice journal entries."
       }
     },
     "android": {
