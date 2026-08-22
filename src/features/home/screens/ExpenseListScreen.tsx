@@ -10,7 +10,7 @@ import { TransactionGroupedList } from '../components/TransactionGroupedList';
 
 export function ExpenseListScreen() {
   const nav = useNavigation<any>();
-  const { colors } = useTheme();
+  const { colors, brand: brandColors } = useTheme();
   const { transactions } = useTransactions();
   const s = makeStyles(colors);
 
@@ -29,6 +29,7 @@ export function ExpenseListScreen() {
       <TransactionGroupedList
         transactions={expenses}
         colors={colors}
+        brandColors={brandColors}
         onPressItem={(tx) => nav.navigate('EditTransactionScreen', { transaction: tx })}
         emptyIcon="receipt-outline"
         emptyTitleTx="expenses.no_entries_title"

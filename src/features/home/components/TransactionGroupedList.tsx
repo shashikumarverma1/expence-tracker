@@ -2,7 +2,9 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import React, { useMemo } from 'react';
 import { SectionList, StyleSheet, TouchableOpacity, View } from 'react-native';
 import CText from '../../../core/component/CText';
-import { AppColors, colors as brandColors, radius, shadow } from '../../../core/utils';
+import { AppColors, getBrandColors, radius, shadow } from '../../../core/utils';
+
+type BrandColors = ReturnType<typeof getBrandColors>;
 import { Transaction, TransactionType } from '../../../core/types/transaction';
 import { useBalanceVisibility } from '../../../core/store/balance/useBalanceVisibility';
 
@@ -41,17 +43,22 @@ function monthLabel(ms: number): string {
   return new Date(ms).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
 }
 
-const TYPE_STYLE: Record<TransactionType, { icon: React.ComponentProps<typeof Ionicons>['name']; bg: string; fg: string; sign: '+' | '-' | '' }> = {
-  EXPENSE: { icon: 'arrow-down-outline',  bg: brandColors.redBg,   fg: brandColors.redText,   sign: '-' },
-  INCOME:  { icon: 'arrow-up-outline',    bg: brandColors.greenBg, fg: brandColors.greenText, sign: '+' },
-  ASSET:   { icon: 'trending-up-outline', bg: brandColors.blueBg,  fg: brandColors.blueText,  sign: '+' },
-  OTHER:   { icon: 'ellipse-outline',     bg: brandColors.purpleDim, fg: brandColors.purple,  sign: '' },
-};
+function getTypeStyle(brandColors: BrandColors): Record<TransactionType, { icon: React.ComponentProps<typeof Ionicons>['name']; bg: string; fg: string; sign: '+' | '-' | '' }> {
+  return {
+    EXPENSE: { icon: 'arrow-down-outline',  bg: brandColors.redBg,   fg: brandColors.redText,   sign: '-' },
+    INCOME:  { icon: 'arrow-up-outline',    bg: brandColors.greenBg, fg: brandColors.greenText, sign: '+' },
+    ASSET:   { icon: 'trending-up-outline', bg: brandColors.blueBg,  fg: brandColors.blueText,  sign: '+' },
+    OTHER:   { icon: 'ellipse-outline',     bg: brandColors.purpleDim, fg: brandColors.purple,  sign: '' },
+  };
+}
 
 // Two-level grouping (month → day) flattened into SectionList sections.
 type DaySection = { title: string; monthTitle: string; net: number; hasAsset: boolean; data: Transaction[] };
 
-function groupByMonthThenDay(items: Transaction[]): DaySection[] {
+function groupByMonthThenDay(
+  items: Transaction[],
+  typeStyle: Record<TransactionType, { sign: '+' | '-' | '' }>,
+): DaySection[] {
   const sections: DaySection[] = [];
   let currentMonthKey = '';
   let currentDayKey = '';
@@ -68,7 +75,7 @@ function groupByMonthThenDay(items: Transaction[]): DaySection[] {
 
     const section = sections[sections.length - 1];
     section.data.push(tx);
-    const sign = TYPE_STYLE[tx.type]?.sign;
+    const sign = typeStyle[tx.type]?.sign;
     section.net += sign === '-' ? -tx.amount : sign === '+' ? tx.amount : 0;
     if (tx.type === 'ASSET') section.hasAsset = true;
   }
@@ -77,10 +84,11 @@ function groupByMonthThenDay(items: Transaction[]): DaySection[] {
 }
 
 export function TransactionGroupedList({
-  transactions, colors, onPressItem, emptyIcon, emptyTitleTx, emptySubTx, header,
+  transactions, colors, brandColors, onPressItem, emptyIcon, emptyTitleTx, emptySubTx, header,
 }: {
   transactions: Transaction[];
   colors: AppColors;
+  brandColors: BrandColors;
   onPressItem: (tx: Transaction) => void;
   emptyIcon: React.ComponentProps<typeof Ionicons>['name'];
   emptyTitleTx: string;
@@ -88,7 +96,8 @@ export function TransactionGroupedList({
   header?: React.ReactElement | null;
 }) {
   const s = makeStyles(colors);
-  const sections = useMemo(() => groupByMonthThenDay(transactions), [transactions]);
+  const TYPE_STYLE = getTypeStyle(brandColors);
+  const sections = useMemo(() => groupByMonthThenDay(transactions, TYPE_STYLE), [transactions, brandColors]);
   const hidden = useBalanceVisibility((st) => st.hidden);
 
   let lastMonthTitle = '';

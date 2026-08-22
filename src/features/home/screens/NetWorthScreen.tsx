@@ -5,7 +5,7 @@ import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CText from '../../../core/component/CText';
 import { useTheme } from '../../../core/hook';
-import { AppColors, colors as brandColors, radius, shadow, formatCompactINR } from '../../../core/utils';
+import { AppColors, colors as staticBrandColors, radius, shadow, formatCompactINR } from '../../../core/utils';
 import { useNetWorth } from '../hooks/useNetWorth';
 import { ASSET_FIELD_KEYS, NetWorth } from '../../../core/types/transaction';
 import { useBalanceVisibility, revealNetWorth } from '../../../core/store/balance/useBalanceVisibility';
@@ -36,18 +36,18 @@ export const FIELD_TO_ASSET_CLASS: Record<string, string> = {
 };
 
 const PALETTE = [
-  brandColors.purple, brandColors.green, brandColors.amber, brandColors.blue,
-  brandColors.red, '#4DA3FF', '#FF8A65', '#8D6E63', '#26A69A', '#AB47BC', '#78909C',
+  staticBrandColors.purple, staticBrandColors.green, staticBrandColors.amber, staticBrandColors.blue,
+  staticBrandColors.red, '#4DA3FF', '#FF8A65', '#8D6E63', '#26A69A', '#AB47BC', '#78909C',
 ];
 
 const formatINR = formatCompactINR;
 
 export function NetWorthScreen() {
   const nav = useNavigation<any>();
-  const { colors } = useTheme();
+  const { colors, brand: brandColors } = useTheme();
   const { netWorth, isLoading } = useNetWorth();
   const hidden = useBalanceVisibility((st) => st.hidden);
-  const s = makeStyles(colors);
+  const s = makeStyles(colors, brandColors);
 
   const rows = ASSET_FIELD_KEYS
     .map((key, i) => ({
@@ -151,7 +151,7 @@ export function NetWorthScreen() {
   );
 }
 
-const makeStyles = (colors: AppColors) => StyleSheet.create({
+const makeStyles = (colors: AppColors, brandColors: typeof staticBrandColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
   title: { fontSize: 17, fontWeight: '600', color: colors.text },

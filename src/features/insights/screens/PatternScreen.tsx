@@ -5,7 +5,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 import CText from '../../../core/component/CText';
 import { useTheme } from '../../../core/hook';
-import { AppColors, colors as brandColors, font, radius, shadow, formatCompactAmount } from '../../../core/utils';
+import { AppColors, getBrandColors, font, radius, shadow, formatCompactAmount } from '../../../core/utils';
+
+type BrandColors = ReturnType<typeof getBrandColors>;
 import { useTransactions } from '../../home/hooks/useTransactions';
 
 // ─── Helpers ─────────────────────────────────────────────────────
@@ -53,13 +55,14 @@ function CardHeader({ label, labelColor, right, colors }: { label: string; label
 // ─── Month ring (circular income/expense split) ───────────────────
 
 function MonthRing({
-  income, expense, size, isCurrent, colors,
+  income, expense, size, isCurrent, colors, brandColors,
 }: {
   income: number;
   expense: number;
   size: number;
   isCurrent: boolean;
   colors: AppColors;
+  brandColors: BrandColors;
 }) {
   const strokeWidth = isCurrent ? 5 : 4;
   const r = (size - strokeWidth) / 2;
@@ -161,7 +164,7 @@ function useMoneyFlow() {
   }, [transactions]);
 }
 
-function MoneyFlowCard({ colors }: { colors: AppColors }) {
+function MoneyFlowCard({ colors, brandColors }: { colors: AppColors; brandColors: BrandColors }) {
   const { monthIncome, monthExpense, net, categories, months, sixMonthNet, hasData } = useMoneyFlow();
   const maxCategory = Math.max(1, ...categories.map((c) => c.amount));
   const netColor = net > 0 ? brandColors.greenText : net < 0 ? brandColors.redText : colors.textMuted;
@@ -250,6 +253,7 @@ function MoneyFlowCard({ colors }: { colors: AppColors }) {
                   size={isCurrent ? 44 : 36}
                   isCurrent={isCurrent}
                   colors={colors}
+                  brandColors={brandColors}
                 />
                 {isCurrent && hasData && (
                   <View style={rs.trendValues}>
@@ -277,7 +281,7 @@ function MoneyFlowCard({ colors }: { colors: AppColors }) {
 // ─── Screen ──────────────────────────────────────────────────────
 
 export function PatternScreen() {
-  const { colors } = useTheme();
+  const { colors, brand: brandColors } = useTheme();
   const s = makeStyles(colors);
 
   return (
@@ -289,7 +293,7 @@ export function PatternScreen() {
 
       <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
         <SLabel txt="MONEY FLOW" colors={colors} />
-        <MoneyFlowCard colors={colors} />
+        <MoneyFlowCard colors={colors} brandColors={brandColors} />
       </ScrollView>
     </SafeAreaView>
   );

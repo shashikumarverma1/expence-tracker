@@ -15,7 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CText from '../../../core/component/CText';
 import { useTheme, useFirebaseStorage } from '../../../core/hook';
-import { AppColors, colors as brandColors, radius } from '../../../core/utils';
+import { AppColors, colors as staticBrandColors, radius } from '../../../core/utils';
 import { fbFunctions, auth } from '../../../core/config/firebase';
 import { confirmTransaction } from '../hooks/useTransactions';
 import {
@@ -65,7 +65,7 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
 export function ConfirmTransactionScreen() {
   const nav = useNavigation<any>();
   const route = useRoute<RouteProp<RouteParams, 'ConfirmTransactionScreen'>>();
-  const { colors } = useTheme();
+  const { colors, brand: brandColors } = useTheme();
   const { transcript, audioUri } = route.params;
   const { uploadImage } = useFirebaseStorage();
 
@@ -147,7 +147,7 @@ export function ConfirmTransactionScreen() {
     }
   };
 
-  const styles2 = makeStyles(colors);
+  const styles2 = makeStyles(colors, brandColors);
 
   return (
     <SafeAreaView style={styles2.safe}>
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   chipTxt: { fontSize: 13, fontWeight: '600' },
 });
 
-const makeStyles = (colors: AppColors) => StyleSheet.create({
+const makeStyles = (colors: AppColors, brandColors: typeof staticBrandColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },

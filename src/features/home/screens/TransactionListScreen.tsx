@@ -6,19 +6,22 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 import CText from '../../../core/component/CText';
 import { useTheme } from '../../../core/hook';
-import { AppColors, colors as brandColors, radius, shadow, formatCompactAmount } from '../../../core/utils';
+import { AppColors, getBrandColors, radius, shadow, formatCompactAmount } from '../../../core/utils';
+
+type BrandColors = ReturnType<typeof getBrandColors>;
 import { useTransactions } from '../hooks/useTransactions';
 import { TransactionGroupedList } from '../components/TransactionGroupedList';
 
 const formatAmount = formatCompactAmount;
 
 function IncomeExpenseRing({
-  income, loan, expense, colors,
+  income, loan, expense, colors, brandColors,
 }: {
   income: number;
   loan:   number;
   expense: number;
   colors: AppColors;
+  brandColors: BrandColors;
 }) {
   const size = 128;
   const strokeWidth = 14;
@@ -100,7 +103,7 @@ function IncomeExpenseRing({
 
 export function TransactionListScreen() {
   const nav = useNavigation<any>();
-  const { colors } = useTheme();
+  const { colors, brand: brandColors } = useTheme();
   const { transactions } = useTransactions();
   const s = makeStyles(colors);
 
@@ -135,11 +138,12 @@ export function TransactionListScreen() {
       <TransactionGroupedList
         transactions={transactions}
         colors={colors}
+        brandColors={brandColors}
         onPressItem={(tx) => nav.navigate('EditTransactionScreen', { transaction: tx })}
         emptyIcon="journal-outline"
         emptyTitleTx="transactions.no_entries_title"
         emptySubTx="transactions.no_entries_sub"
-        header={<IncomeExpenseRing income={income} loan={loan} expense={expense} colors={colors} />}
+        header={<IncomeExpenseRing income={income} loan={loan} expense={expense} colors={colors} brandColors={brandColors} />}
       />
     </SafeAreaView>
   );

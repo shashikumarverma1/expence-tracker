@@ -18,7 +18,9 @@ import { useTranslation } from 'react-i18next';
 import Svg, { Circle } from 'react-native-svg';
 import CText from '../../../core/component/CText';
 import { useTheme } from '../../../core/hook';
-import { AppColors, colors as brandColors, radius, shadow, formatCompactAmount } from '../../../core/utils';
+import { AppColors, colors as staticBrandColors, getBrandColors, radius, shadow, formatCompactAmount } from '../../../core/utils';
+
+type BrandColors = ReturnType<typeof getBrandColors>;
 import { useTransactions } from '../hooks/useTransactions';
 import { useNetWorth } from '../hooks/useNetWorth';
 import { useMonthlyBudget, setMonthlyBudget } from '../hooks/useMonthlyBudget';
@@ -43,8 +45,8 @@ const formatAmount = formatCompactAmount;
 // ─── Net worth ring ──────────────────────────────────────────────
 
 const RING_PALETTE = [
-  brandColors.purple, brandColors.green, brandColors.amber, brandColors.blue,
-  brandColors.red, '#4DA3FF', '#FF8A65', '#8D6E63', '#26A69A', '#AB47BC', '#78909C',
+  staticBrandColors.purple, staticBrandColors.green, staticBrandColors.amber, staticBrandColors.blue,
+  staticBrandColors.red, '#4DA3FF', '#FF8A65', '#8D6E63', '#26A69A', '#AB47BC', '#78909C',
 ];
 
 const RING_LABEL: Record<string, string> = {
@@ -56,10 +58,11 @@ const RING_LABEL: Record<string, string> = {
 const BALANCE_MASK = '••••••';
 
 function NetWorthRing({
-  netWorth, colors, onSelectAsset,
+  netWorth, colors, brandColors, onSelectAsset,
 }: {
   netWorth: NetWorth;
   colors: AppColors;
+  brandColors: BrandColors;
   onSelectAsset: (assetClass: string, label: string) => void;
 }) {
   const hidden = useBalanceVisibility((s) => s.hidden);
@@ -179,11 +182,12 @@ function NetWorthRing({
 // ─── Budget bar ──────────────────────────────────────────────────
 
 function BudgetBar({
-  spent, budget, colors, onPress,
+  spent, budget, colors, brandColors, onPress,
 }: {
   spent:   number;
   budget:  number;
   colors:  AppColors;
+  brandColors: BrandColors;
   onPress: () => void;
 }) {
   const s = makeStyles(colors);
@@ -248,15 +252,17 @@ function formatDateTime(ms: number): string {
   return `${date}, ${time}`;
 }
 
-const TX_ROW_STYLE: Record<TransactionType, { icon: React.ComponentProps<typeof Ionicons>['name']; bg: string; fg: string; sign: '+' | '-' | '' }> = {
-  EXPENSE: { icon: 'arrow-down-outline', bg: brandColors.redBg,    fg: brandColors.redText,   sign: '-' },
-  INCOME:  { icon: 'arrow-up-outline',   bg: brandColors.greenBg,  fg: brandColors.greenText, sign: '+' },
-  ASSET:   { icon: 'trending-up-outline', bg: brandColors.blueBg,  fg: brandColors.blueText,  sign: '+' },
-  OTHER:   { icon: 'ellipse-outline',    bg: brandColors.purpleDim, fg: brandColors.purple,   sign: '' },
-};
+function getTxRowStyle(brandColors: BrandColors): Record<TransactionType, { icon: React.ComponentProps<typeof Ionicons>['name']; bg: string; fg: string; sign: '+' | '-' | '' }> {
+  return {
+    EXPENSE: { icon: 'arrow-down-outline', bg: brandColors.redBg,    fg: brandColors.redText,   sign: '-' },
+    INCOME:  { icon: 'arrow-up-outline',   bg: brandColors.greenBg,  fg: brandColors.greenText, sign: '+' },
+    ASSET:   { icon: 'trending-up-outline', bg: brandColors.blueBg,  fg: brandColors.blueText,  sign: '+' },
+    OTHER:   { icon: 'ellipse-outline',    bg: brandColors.purpleDim, fg: brandColors.purple,   sign: '' },
+  };
+}
 
 function TransactionRow({
-  type, amount, currency, category, summary, timeLabel, onPress, colors,
+  type, amount, currency, category, summary, timeLabel, onPress, colors, brandColors,
 }: {
   type:      TransactionType;
   amount:    number;
@@ -266,8 +272,10 @@ function TransactionRow({
   timeLabel: string;
   onPress:   () => void;
   colors:    AppColors;
+  brandColors: BrandColors;
 }) {
   const s = makeStyles(colors);
+  const TX_ROW_STYLE = getTxRowStyle(brandColors);
   const ts = TX_ROW_STYLE[type] ?? TX_ROW_STYLE.OTHER;
   const hidden = useBalanceVisibility((st) => st.hidden);
   return (
@@ -304,7 +312,7 @@ const RING = BTN + 32;
 export function HomeScreen() {
   const nav         = useNavigation<any>();
   const uid         = useAuthStore((s) => s.user?.uid);
-  const { colors }  = useTheme();
+  const { colors, brand: brandColors }  = useTheme();
   const { t }       = useTranslation();
   const insets      = useSafeAreaInsets();
   const { transactions } = useTransactions();
@@ -452,6 +460,7 @@ export function HomeScreen() {
           <NetWorthRing
             netWorth={netWorth}
             colors={colors}
+            brandColors={brandColors}
             onSelectAsset={(assetClass, label) => nav.navigate('AssetClassDetailScreen', { assetClass, label })}
           />
           <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
@@ -464,6 +473,7 @@ export function HomeScreen() {
           spent={monthSpent}
           budget={monthlyBudget}
           colors={colors}
+          brandColors={brandColors}
           onPress={openBudgetModal}
         />
 
@@ -633,6 +643,7 @@ export function HomeScreen() {
               timeLabel={tx.createdAt ? formatDateTime(tx.createdAt) : ''}
               onPress={() => nav.navigate('EditTransactionScreen', { transaction: tx })}
               colors={colors}
+              brandColors={brandColors}
             />
           ))}
         </View>

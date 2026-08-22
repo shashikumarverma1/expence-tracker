@@ -27,7 +27,9 @@ import Animated, {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { createAudioPlayer } from 'expo-audio';
 import { useTheme } from '../../../core/hook';
-import { AppColors, colors as brandColors } from '../../../core/utils';
+import { AppColors, getBrandColors } from '../../../core/utils';
+
+type BrandColors = ReturnType<typeof getBrandColors>;
 import { RecordingState, useRecording } from '../hooks/useRecording';
 // ── Helpers ───────────────────────────────────────────────────
 function formatTimer(secs: number): string {
@@ -128,16 +130,16 @@ function PulseRing({ color, delay }: { color: string; delay: number }) {
 }
 
 // ── Main circle button ────────────────────────────────────────
-const BTN_BG = (colors: AppColors): Record<RecordingState, string> => ({
+const BTN_BG = (colors: AppColors, brandColors: BrandColors): Record<RecordingState, string> => ({
   idle:      brandColors.micBlueDark,
   recording: colors.error,
   stopped:   colors.success,
 });
 
 function CircleButton({ state, onPress }: { state: RecordingState; onPress: () => void }) {
-  const { colors } = useTheme();
+  const { colors, brand: brandColors } = useTheme();
   const s          = makeStyles(colors);
-  const bg         = BTN_BG(colors);
+  const bg         = BTN_BG(colors, brandColors);
   const pulseColor = state === 'idle' ? brandColors.micBlue : bg[state];
 
   return (
@@ -154,7 +156,7 @@ function CircleButton({ state, onPress }: { state: RecordingState; onPress: () =
         {state === 'stopped' ? (
           <Ionicons name="checkmark" size={38} color="#fff" />
         ) : (
-          <Ionicons name="mic" size={38} color={state === 'idle' ? brandColors.micBlue : '#fff'} />
+          <Ionicons name="mic" size={38} color={state === 'idle' ? (brandColors.micBlue) : '#fff'} />
         )}
       </TouchableOpacity>
     </View>

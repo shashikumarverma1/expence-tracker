@@ -5,7 +5,7 @@ import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CText from '../../../core/component/CText';
 import { useTheme } from '../../../core/hook';
-import { AppColors, colors as brandColors, radius, shadow } from '../../../core/utils';
+import { AppColors, radius, shadow } from '../../../core/utils';
 import { useTransactions } from '../hooks/useTransactions';
 import { Transaction } from '../../../core/types/transaction';
 import { useBalanceVisibility } from '../../../core/store/balance/useBalanceVisibility';
@@ -25,7 +25,7 @@ function formatDate(ms: number): string {
 export function AssetClassDetailScreen() {
   const nav = useNavigation<any>();
   const route = useRoute<RouteProp<RouteParams, 'AssetClassDetailScreen'>>();
-  const { colors } = useTheme();
+  const { colors, brand: brandColors } = useTheme();
   const { transactions, isLoading } = useTransactions();
   const { assetClass, label } = route.params;
   const hidden = useBalanceVisibility((s) => s.hidden);

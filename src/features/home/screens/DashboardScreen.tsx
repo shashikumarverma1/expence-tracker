@@ -5,7 +5,7 @@ import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CText from '../../../core/component/CText';
 import { useTheme } from '../../../core/hook';
-import { AppColors, colors as brandColors, radius, shadow, formatCompactINR } from '../../../core/utils';
+import { AppColors, colors as staticBrandColors, radius, shadow, formatCompactINR } from '../../../core/utils';
 import { useTransactions } from '../hooks/useTransactions';
 import { useNetWorth } from '../hooks/useNetWorth';
 import { Emotion } from '../../../core/types/transaction';
@@ -19,8 +19,8 @@ const EMOTION_EMOJI: Record<Emotion, string> = {
 };
 
 const CATEGORY_PALETTE = [
-  brandColors.purple, brandColors.red, brandColors.amber, brandColors.blue,
-  brandColors.green, '#8D6E63', '#AB47BC', '#78909C', '#FF8A65', '#26A69A', '#4DA3FF',
+  staticBrandColors.purple, staticBrandColors.red, staticBrandColors.amber, staticBrandColors.blue,
+  staticBrandColors.green, '#8D6E63', '#AB47BC', '#78909C', '#FF8A65', '#26A69A', '#4DA3FF',
 ];
 
 const formatINR = formatCompactINR;
@@ -35,11 +35,11 @@ const MONTH_LABEL = new Date().toLocaleDateString('en-IN', { month: 'long', year
 
 export function DashboardScreen() {
   const nav = useNavigation<any>();
-  const { colors } = useTheme();
+  const { colors, brand: brandColors } = useTheme();
   const { transactions } = useTransactions();
   const { netWorth } = useNetWorth();
   const hidden = useBalanceVisibility((st) => st.hidden);
-  const s = makeStyles(colors);
+  const s = makeStyles(colors, brandColors);
 
   const stats = useMemo(() => {
     const thisMonth = transactions.filter((tx) => isThisMonth(tx.timestamp));
@@ -223,7 +223,7 @@ export function DashboardScreen() {
   );
 }
 
-const makeStyles = (colors: AppColors) => StyleSheet.create({
+const makeStyles = (colors: AppColors, brandColors: typeof staticBrandColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
   title: { fontSize: 17, fontWeight: '600', color: colors.text },

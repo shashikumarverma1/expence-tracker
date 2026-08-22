@@ -10,7 +10,7 @@ import { TransactionGroupedList } from '../components/TransactionGroupedList';
 
 export function AssetListScreen() {
   const nav = useNavigation<any>();
-  const { colors } = useTheme();
+  const { colors, brand: brandColors } = useTheme();
   const { transactions } = useTransactions();
   const s = makeStyles(colors);
 
@@ -36,6 +36,7 @@ export function AssetListScreen() {
       <TransactionGroupedList
         transactions={assets}
         colors={colors}
+        brandColors={brandColors}
         onPressItem={(tx) => nav.navigate('EditTransactionScreen', { transaction: tx })}
         emptyIcon="trending-up-outline"
         emptyTitleTx="assets.no_entries_title"
