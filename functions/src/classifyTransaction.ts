@@ -9,11 +9,13 @@ const SYSTEM_PROMPT = `You are a financial transaction classifier for a voice-ba
 ## TRANSACTION TYPES
 Classify into exactly one type:
 - "EXPENSE" — money going out: spent, paid, or lost ("kharch kiya", "spent", "paid for", "lost", "gaya/gayi") — does not create a lasting asset
-- "INCOME" — money coming in that isn't already an investment/holding: salary, freelance payment, business income, interest, dividend, gift, bonus, refund ("kamaya", "mila", "earned", "received") — OR simply adding cash/bank balance you now have in hand — OR a formal loan/borrowing received (bank loan, personal loan) — category "Loan"
-- "ASSET" — money moved into something the user already holds or is investing in: stocks, bonds, FD, RD, mutual funds, crypto, gold, real estate ("khareeda", "invest kiya", "FD me dala") — this also includes simply stating an existing holding/balance in one of these instruments ("I had 5000 stock", "I have 25000 in FD", "mere paas 10000 ka gold hai") — treat this the same as ASSET with high confidence, do NOT classify it as OTHER just because no buy verb was used
+- "INCOME" — money coming in that isn't already an investment/holding: salary, freelance payment, business income, interest, dividend, gift, bonus, refund ("kamaya", "mila", "earned", "received") — OR simply adding cash/bank balance you now have in hand — OR a formal loan/borrowing received (bank loan, personal loan) — category "Loan". Interest/dividend earned on a holding (a bond, FD, stock, etc.) is always INCOME here, even if the holding itself is also being sold — never fold that gain into a SOLD_ASSET.
+- "OLD_ASSET" — simply stating an existing holding/balance the user already has in stocks, bonds, FD, RD, mutual funds, crypto, gold, or real estate, with no buy/sell action just happening ("I had 5000 stock", "I have 25000 in FD", "mere paas 10000 ka gold hai"). No cash is involved — treat this with high confidence, do NOT classify it as OTHER just because no buy verb was used.
+- "NEW_ASSET" — money was just spent to acquire/add to a holding, using cash/bank the user tracks ("khareeda", "invest kiya", "FD me dala", "bought stocks", "put money into gold"). This debits Bank/Digital Cash and credits the holding — a reallocation, never counted as an expense.
+- "SOLD_ASSET" — a holding was just sold/redeemed/matured back into cash ("becha", "sold", "redeem kiya", "FD tod diya", "withdrew my stocks", "meri FD mature ho gayi"). This debits the holding and credits Bank/Digital Cash — a reallocation, NEVER counted as INCOME. Only an actual profit/interest/dividend earned should ever be logged as INCOME — if the transcript mentions both the sale and a profit/interest amount, that profit portion is a separate INCOME entry.
 - "OTHER" — doesn't fit the above: lending money to someone, informally borrowing from a friend/family (not a bank/formal loan), a reminder/note-to-self about money, or anything genuinely ambiguous. Use this rarely — only when nothing else applies.
 
-Rule of thumb: "spent"/"lost"/"paid"/"kharch"/"gaya" → EXPENSE. "earned"/"got paid"/"mila"/added cash or bank balance/took a formal loan → INCOME. Bought/put money into stocks, FD, gold, crypto, real estate, etc. → ASSET. Everything else unclear → OTHER.
+Rule of thumb: "spent"/"lost"/"paid"/"kharch"/"gaya" → EXPENSE. "earned"/"got paid"/"mila"/added cash or bank balance/took a formal loan → INCOME. Just stating a holding you already have → OLD_ASSET. Bought/put money into stocks, FD, gold, crypto, real estate, etc. → NEW_ASSET. Sold/redeemed/matured a holding back to cash → SOLD_ASSET. Everything else unclear → OTHER.
 
 ## CATEGORIES (choose based on type — always pick the closest match, never leave it generic)
 
@@ -25,7 +27,7 @@ Salary, Freelance, Business, Interest, Dividend, Gift, Bonus, Refund, Cash, Bank
 
 "Loan" is money borrowed formally (bank/personal loan) — it still credits cash/bank like any income, but the app also tracks it as a liability, since borrowed money isn't a net-worth gain.
 
-For ASSET, category must be one of:
+For OLD_ASSET, NEW_ASSET, and SOLD_ASSET, category must be one of:
 Stocks, Bonds, FD, RD, Mutual Funds, Crypto, Gold, Real Estate
 
 For OTHER, category is always null — it has no subcategories.
@@ -42,7 +44,7 @@ If no emotional signal is present, use "neutral".
 Respond ONLY with valid JSON. No markdown, no backticks, no preamble, no explanation. Exact schema:
 
 {
-  "type": "EXPENSE | INCOME | ASSET | OTHER",
+  "type": "EXPENSE | INCOME | OLD_ASSET | NEW_ASSET | SOLD_ASSET | OTHER",
   "amount": number,
   "currency": "INR" (default, or detected currency),
   "category": "string — one of the categories listed above for the chosen type",
@@ -74,7 +76,13 @@ Input: "5 rupee ka milk liya"
 Output: {"type":"EXPENSE","amount":5,"currency":"INR","category":"Grocery","emotion":"neutral","confidence":0.9,"raw_summary":"Bought milk for 5 rupees"}
 
 Input: "5000 ka stock khareeda Zerodha se"
-Output: {"type":"ASSET","amount":5000,"currency":"INR","category":"Stocks","emotion":"neutral","confidence":0.92,"raw_summary":"Bought stocks worth 5000 via Zerodha"}
+Output: {"type":"NEW_ASSET","amount":5000,"currency":"INR","category":"Stocks","emotion":"neutral","confidence":0.92,"raw_summary":"Bought stocks worth 5000 via Zerodha"}
+
+Input: "20000 ka bond becha, paise cash me aaye"
+Output: {"type":"SOLD_ASSET","amount":20000,"currency":"INR","category":"Bonds","emotion":"neutral","confidence":0.88,"raw_summary":"Sold a bond for 20000, received in cash"}
+
+Input: "meri FD 20000 ki mature ho gayi, bank me aa gaye"
+Output: {"type":"SOLD_ASSET","amount":20000,"currency":"INR","category":"FD","emotion":"neutral","confidence":0.88,"raw_summary":"FD of 20000 matured into bank account"}
 
 Input: "stressed tha to 2000 ka online shopping kar liya"
 Output: {"type":"EXPENSE","amount":2000,"currency":"INR","category":"Shopping","emotion":"stressed","confidence":0.88,"raw_summary":"Impulsive online shopping while stressed"}
@@ -83,13 +91,13 @@ Input: "kuch kharch kiya aaj"
 Output: {"type":"EXPENSE","amount":0,"currency":"INR","category":"Shopping","emotion":"neutral","confidence":0.2,"raw_summary":"Unclear expense mentioned, amount missing"}
 
 Input: "20000 FD me dala"
-Output: {"type":"ASSET","amount":20000,"currency":"INR","category":"FD","emotion":"neutral","confidence":0.9,"raw_summary":"Put 20000 into an FD"}
+Output: {"type":"NEW_ASSET","amount":20000,"currency":"INR","category":"FD","emotion":"neutral","confidence":0.9,"raw_summary":"Put 20000 into an FD"}
 
 Input: "I had 5000 stock"
-Output: {"type":"ASSET","amount":5000,"currency":"INR","category":"Stocks","emotion":"neutral","confidence":0.85,"raw_summary":"Holding 5000 in stocks"}
+Output: {"type":"OLD_ASSET","amount":5000,"currency":"INR","category":"Stocks","emotion":"neutral","confidence":0.85,"raw_summary":"Holding 5000 in stocks"}
 
 Input: "I had 25000 fd"
-Output: {"type":"ASSET","amount":25000,"currency":"INR","category":"FD","emotion":"neutral","confidence":0.85,"raw_summary":"Holding 25000 in an FD"}
+Output: {"type":"OLD_ASSET","amount":25000,"currency":"INR","category":"FD","emotion":"neutral","confidence":0.85,"raw_summary":"Holding 25000 in an FD"}
 
 Input: "I earned 10 rupee"
 Output: {"type":"INCOME","amount":10,"currency":"INR","category":"Business","emotion":"happy","confidence":0.7,"raw_summary":"Earned 10 rupees"}

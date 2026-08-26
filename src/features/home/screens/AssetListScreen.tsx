@@ -7,6 +7,7 @@ import { useTheme } from '../../../core/hook';
 import { AppColors } from '../../../core/utils';
 import { useTransactions } from '../hooks/useTransactions';
 import { TransactionGroupedList } from '../components/TransactionGroupedList';
+import { isAssetType, TransactionType } from '../../../core/types/transaction';
 
 export function AssetListScreen() {
   const nav = useNavigation<any>();
@@ -20,8 +21,8 @@ export function AssetListScreen() {
   // net worth) are excluded.
   const assets = useMemo(
     () => transactions.filter((tx) => {
-      const type = String(tx.type).toUpperCase();
-      return type === 'ASSET' || type === 'INCOME';
+      const type = (String(tx.type).toUpperCase() === 'ASSET' ? 'OLD_ASSET' : tx.type) as TransactionType;
+      return isAssetType(type) || type === 'INCOME';
     }),
     [transactions],
   );

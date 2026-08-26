@@ -75,5 +75,13 @@ service cloud.firestore {
       allow read: if request.auth != null && request.auth.uid == userId;
       allow write: if false;
     }
+
+    // src/core/ledger/* — the standalone named-asset ledger (separate from
+    // transactions/netWorth above). Read/written directly by the client via
+    // firestoreLedgerStorage (zustand persist), never through a Cloud
+    // Function, so owner read/write both need to be allowed here.
+    match /ledgers/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
   }
 }

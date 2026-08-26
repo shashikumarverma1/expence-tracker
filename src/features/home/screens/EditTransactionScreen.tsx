@@ -27,13 +27,27 @@ import {
 
 type RouteParams = { EditTransactionScreen: { transaction: Transaction } };
 
-const TYPES: TransactionType[] = ['EXPENSE', 'INCOME', 'ASSET'];
+const TYPES: TransactionType[] = ['EXPENSE', 'INCOME', 'OLD_ASSET', 'NEW_ASSET', 'SOLD_ASSET'];
 
 const TYPE_LABEL: Record<TransactionType, string> = {
-  EXPENSE: 'Expense', INCOME: 'Income', ASSET: 'Asset', OTHER: 'Other',
+  EXPENSE: 'Expense', INCOME: 'Income',
+  OLD_ASSET: 'Existing Asset', NEW_ASSET: 'Buy Asset', SOLD_ASSET: 'Sell Asset',
+  OTHER: 'Other',
+};
+
+const TYPE_HINT: Partial<Record<TransactionType, string>> = {
+  OLD_ASSET: 'Just stating a holding you already have — adds to net worth, no cash moves.',
+  NEW_ASSET: 'Bought using cash/bank you track — moves money from cash into this asset, not an expense.',
+  SOLD_ASSET: 'Sold/redeemed back to cash/bank — moves money from this asset into cash, not income.',
 };
 
 const CURRENCY_SYMBOL: Record<string, string> = { INR: '₹', USD: '$', EUR: '€', GBP: '£' };
+
+// Docs written before OLD_ASSET/NEW_ASSET/SOLD_ASSET existed carry type
+// "ASSET" — treat those as OLD_ASSET so this screen's TYPES list can find them.
+function normalizeType(type: TransactionType): TransactionType {
+  return (type as string) === 'ASSET' ? 'OLD_ASSET' : type;
+}
 
 function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   const { colors } = useTheme();
@@ -60,7 +74,7 @@ export function EditTransactionScreen() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [type, setType] = useState<TransactionType>(tx.type);
+  const [type, setType] = useState<TransactionType>(normalizeType(tx.type));
   const [amount, setAmount] = useState(String(tx.amount));
   const [category, setCategory] = useState<string | null>(tx.category);
   const [emotion, setEmotion] = useState<Emotion>(tx.emotion);
@@ -139,11 +153,8 @@ export function EditTransactionScreen() {
               />
             ))}
           </View>
-          {type === 'ASSET' && (
-            <CText
-              txt="Assets (stocks, gold, FD, etc.) add to your net worth — they aren't counted as income or expense."
-              style={s.hintTxt}
-            />
+          {TYPE_HINT[type] && (
+            <CText txt={TYPE_HINT[type]} style={s.hintTxt} />
           )}
 
           <CText txt={`Amount (${CURRENCY_SYMBOL[tx.currency] ?? tx.currency ?? '₹'})`} style={s.label} />

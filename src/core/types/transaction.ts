@@ -2,15 +2,35 @@
 // Mirrors the Firestore schema written by functions/src/classifyTransaction.ts
 // and functions/src/updateNetWorth.ts — keep these three in sync.
 
-// Four top-level types:
-// - EXPENSE — money going out (spent, paid, lost).
-// - INCOME  — money coming in that isn't already held as an investment
-//             (salary, freelance, gifts, interest, or simply cash/bank added).
-// - ASSET   — money moved into something you already hold/invest in
-//             (stocks, bonds, FD, RD, mutual funds, crypto, gold, real estate).
-// - OTHER   — anything that doesn't fit the above (lending money, a note-to-
-//             self, an unclear entry). Never affects net worth.
-export type TransactionType = 'EXPENSE' | 'INCOME' | 'ASSET' | 'OTHER';
+// Five top-level types:
+// - EXPENSE    — money going out (spent, paid, lost).
+// - INCOME     — money coming in that isn't already held as an investment
+//                (salary, freelance, gifts, interest, or simply cash/bank
+//                added). Interest/dividend earned on a held asset belongs
+//                here, not in any *_ASSET type below.
+// - OLD_ASSET  — just stating a holding you already have (no buy/sell just
+//                happened, e.g. "I had 5000 stock") — only the asset field
+//                moves, no cash is touched.
+// - NEW_ASSET  — bought using cash/bank money you track (e.g. "khareeda 5000
+//                ka stock", "20000 FD me dala") — a reallocation: the asset
+//                field goes up and Bank/Digital Cash goes down by the same
+//                amount, so it's never counted as an expense.
+// - SOLD_ASSET — sold/redeemed a holding back to cash/bank (e.g. "bond becha",
+//                "FD mature ho gayi") — the reverse reallocation: the asset
+//                field goes down and Bank/Digital Cash goes up. Not income —
+//                any actual gain over principal must be logged separately as
+//                its own INCOME (Interest/Dividend) entry.
+// - OTHER      — anything that doesn't fit the above (lending money, a
+//                note-to-self, an unclear entry). Never affects net worth.
+export type TransactionType =
+  | 'EXPENSE' | 'INCOME' | 'OLD_ASSET' | 'NEW_ASSET' | 'SOLD_ASSET' | 'OTHER';
+
+// The three ASSET-shaped types (same categories, same UI treatment) — used
+// wherever code needs to check "is this any kind of asset entry".
+export const ASSET_TYPES: readonly TransactionType[] = ['OLD_ASSET', 'NEW_ASSET', 'SOLD_ASSET'];
+export function isAssetType(type: TransactionType): boolean {
+  return (ASSET_TYPES as readonly string[]).includes(type);
+}
 
 export type Emotion =
   | 'happy'
@@ -114,6 +134,6 @@ export interface NetWorth {
 export function categoriesForType(type: TransactionType): readonly string[] {
   if (type === 'EXPENSE') return EXPENSE_CATEGORIES;
   if (type === 'INCOME') return INCOME_CATEGORIES;
-  if (type === 'ASSET') return ASSET_CATEGORIES;
+  if (isAssetType(type)) return ASSET_CATEGORIES;
   return [];
 }

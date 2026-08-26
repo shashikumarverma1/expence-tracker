@@ -27,10 +27,18 @@ import {
 
 type RouteParams = { ConfirmTransactionScreen: { audioUri?: string; transcript: string } };
 
-const TYPES: TransactionType[] = ['EXPENSE', 'INCOME', 'ASSET'];
+const TYPES: TransactionType[] = ['EXPENSE', 'INCOME', 'OLD_ASSET', 'NEW_ASSET', 'SOLD_ASSET'];
 
 const TYPE_LABEL: Record<TransactionType, string> = {
-  EXPENSE: 'Expense', INCOME: 'Income', ASSET: 'Asset', OTHER: 'Other',
+  EXPENSE: 'Expense', INCOME: 'Income',
+  OLD_ASSET: 'Existing Asset', NEW_ASSET: 'Buy Asset', SOLD_ASSET: 'Sell Asset',
+  OTHER: 'Other',
+};
+
+const TYPE_HINT: Partial<Record<TransactionType, string>> = {
+  OLD_ASSET: 'Just stating a holding you already have — adds to net worth, no cash moves.',
+  NEW_ASSET: 'Bought using cash/bank you track — moves money from cash into this asset, not an expense.',
+  SOLD_ASSET: 'Sold/redeemed back to cash/bank — moves money from this asset into cash, not income.',
 };
 
 const CURRENCY_SYMBOL: Record<string, string> = { INR: '₹', USD: '$', EUR: '€', GBP: '£' };
@@ -194,11 +202,8 @@ export function ConfirmTransactionScreen() {
                 />
               ))}
             </View>
-            {type === 'ASSET' && (
-              <CText
-                txt="Assets (stocks, gold, FD, etc.) add to your net worth — they aren't counted as income or expense."
-                style={styles2.hintTxt}
-              />
+            {TYPE_HINT[type] && (
+              <CText txt={TYPE_HINT[type]} style={styles2.hintTxt} />
             )}
 
             <CText txt={`Amount (${CURRENCY_SYMBOL[currency] ?? currency})`} style={styles2.label} />

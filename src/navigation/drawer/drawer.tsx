@@ -13,6 +13,7 @@ import { auth, db } from "../../core/config/firebase";
 // import SubscriptionScreen from "../../features/subscription/screens/SubscriptionScreen";
 import { collections } from "../../core/enum/eCollections";
 import { ensureUserProfile } from "../../features/auth/hooks/userService";
+import { initLedgerFirestoreSync } from "../../core/ledger/useLedger";
 
 const Drawer = createDrawerNavigator();
 
@@ -22,6 +23,7 @@ export function DrawerNavigation() {
 
   React.useEffect(() => {
     let profileUnsubscribe: (() => void) | null = null;
+    let ledgerUnsubscribe: (() => void) | null = null;
 
     // Safety net: if Firebase hangs for any reason, don't stay stuck loading
     const safetyTimer = setTimeout(() => {
@@ -33,6 +35,8 @@ export function DrawerNavigation() {
 
       profileUnsubscribe?.();
       profileUnsubscribe = null;
+      ledgerUnsubscribe?.();
+      ledgerUnsubscribe = initLedgerFirestoreSync(userData?.uid ?? null);
 
       store.setUser(userData);
 
@@ -84,6 +88,7 @@ export function DrawerNavigation() {
       clearTimeout(safetyTimer);
       authUnsubscribe();
       profileUnsubscribe?.();
+      ledgerUnsubscribe?.();
     };
   }, []);
 
