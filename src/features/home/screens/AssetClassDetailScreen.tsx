@@ -7,7 +7,7 @@ import CText from '../../../core/component/CText';
 import { useTheme } from '../../../core/hook';
 import { AppColors, radius, shadow } from '../../../core/utils';
 import { useTransactions } from '../hooks/useTransactions';
-import { Transaction } from '../../../core/types/transaction';
+import { isAssetType, Transaction, TransactionType } from '../../../core/types/transaction';
 import { useBalanceVisibility } from '../../../core/store/balance/useBalanceVisibility';
 
 type RouteParams = { AssetClassDetailScreen: { assetClass: string; label: string } };
@@ -30,34 +30,45 @@ export function AssetClassDetailScreen() {
   const { assetClass, label } = route.params;
   const hidden = useBalanceVisibility((s) => s.hidden);
 
+  // Legacy docs written before OLD_ASSET/NEW_ASSET/SOLD_ASSET existed still
+  // carry type "ASSET" — treat those as OLD_ASSET (their original behavior).
+  const normalizeType = (type: TransactionType): TransactionType =>
+    (type as string) === 'ASSET' ? 'OLD_ASSET' : type;
+
   // "Cash" and "Bank/Digital Cash" are INCOME-type categories (plain money
-  // added), while the rest (Stocks, FD, Gold, …) are ASSET-type holdings —
+  // added), while the rest (Stocks, FD, Gold, …) are asset-type holdings —
   // match whichever type this assetClass's category actually belongs to.
   const filtered = transactions.filter(
-    (tx) => (tx.type === 'ASSET' || tx.type === 'INCOME') && tx.category === assetClass,
+    (tx) => (isAssetType(normalizeType(tx.type)) || tx.type === 'INCOME') && tx.category === assetClass,
   );
 
   const s = makeStyles(colors);
 
-  const renderItem = ({ item }: { item: Transaction }) => (
-    <TouchableOpacity
-      activeOpacity={0.8}
-      onPress={() => nav.navigate('EditTransactionScreen', { transaction: item })}
-      style={[s.row, { backgroundColor: colors.surface }, shadow.card]}
-    >
-      <View style={[s.iconWrap, { backgroundColor: brandColors.greenBg }]}>
-        <Ionicons name="arrow-up" size={16} color={brandColors.greenText} />
-      </View>
-      <View style={s.mid}>
-        <CText txt={item.rawSummary || 'Asset added'} style={[s.summary, { color: colors.text }]} numberOfLines={2} />
-        <CText txt={formatDate(item.timestamp)} style={[s.meta, { color: colors.textMuted }]} />
-      </View>
-      <CText
-        txt={item.type === 'ASSET' && hidden ? BALANCE_MASK : `+${formatINR(item.amount)}`}
-        style={[s.amount, { color: brandColors.greenText }]}
-      />
-    </TouchableOpacity>
-  );
+  const renderItem = ({ item }: { item: Transaction }) => {
+    const isSold = normalizeType(item.type) === 'SOLD_ASSET';
+    const isAsset = isAssetType(normalizeType(item.type));
+    const sign = isSold ? '-' : '+';
+    const color = isSold ? brandColors.redText : brandColors.greenText;
+    return (
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => nav.navigate('EditTransactionScreen', { transaction: item })}
+        style={[s.row, { backgroundColor: colors.surface }, shadow.card]}
+      >
+        <View style={[s.iconWrap, { backgroundColor: isSold ? brandColors.redBg : brandColors.greenBg }]}>
+          <Ionicons name={isSold ? 'arrow-down' : 'arrow-up'} size={16} color={color} />
+        </View>
+        <View style={s.mid}>
+          <CText txt={item.rawSummary || 'Asset added'} style={[s.summary, { color: colors.text }]} numberOfLines={2} />
+          <CText txt={formatDate(item.timestamp)} style={[s.meta, { color: colors.textMuted }]} />
+        </View>
+        <CText
+          txt={isAsset && hidden ? BALANCE_MASK : `${sign}${formatINR(item.amount)}`}
+          style={[s.amount, { color }]}
+        />
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={s.safe}>

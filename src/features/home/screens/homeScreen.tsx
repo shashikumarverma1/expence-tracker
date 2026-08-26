@@ -24,7 +24,13 @@ type BrandColors = ReturnType<typeof getBrandColors>;
 import { useTransactions } from '../hooks/useTransactions';
 import { useNetWorth } from '../hooks/useNetWorth';
 import { useMonthlyBudget, setMonthlyBudget } from '../hooks/useMonthlyBudget';
-import { ASSET_FIELD_KEYS, NetWorth, TransactionType } from '../../../core/types/transaction';
+import { ASSET_FIELD_KEYS, isAssetType, NetWorth, TransactionType } from '../../../core/types/transaction';
+
+// Legacy docs written before OLD_ASSET/NEW_ASSET/SOLD_ASSET existed still
+// carry type "ASSET" — treat those as OLD_ASSET (their original behavior).
+function normalizeTxType(type: TransactionType): TransactionType {
+  return (type as string) === 'ASSET' ? 'OLD_ASSET' : type;
+}
 import { useIsPro } from '../../subscription/hooks/useIsPro';
 import { SubscriptionModal } from '../../subscription/screens/SubscriptionModal';
 import { getExpoPushToken, saveExpoPushToken } from '../../notification/hook/expoPushToken';
@@ -254,10 +260,12 @@ function formatDateTime(ms: number): string {
 
 function getTxRowStyle(brandColors: BrandColors): Record<TransactionType, { icon: React.ComponentProps<typeof Ionicons>['name']; bg: string; fg: string; sign: '+' | '-' | '' }> {
   return {
-    EXPENSE: { icon: 'arrow-down-outline', bg: brandColors.redBg,    fg: brandColors.redText,   sign: '-' },
-    INCOME:  { icon: 'arrow-up-outline',   bg: brandColors.greenBg,  fg: brandColors.greenText, sign: '+' },
-    ASSET:   { icon: 'trending-up-outline', bg: brandColors.blueBg,  fg: brandColors.blueText,  sign: '+' },
-    OTHER:   { icon: 'ellipse-outline',    bg: brandColors.purpleDim, fg: brandColors.purple,   sign: '' },
+    EXPENSE:    { icon: 'arrow-down-outline',    bg: brandColors.redBg,     fg: brandColors.redText,   sign: '-' },
+    INCOME:     { icon: 'arrow-up-outline',      bg: brandColors.greenBg,   fg: brandColors.greenText, sign: '+' },
+    OLD_ASSET:  { icon: 'trending-up-outline',   bg: brandColors.blueBg,    fg: brandColors.blueText,  sign: '+' },
+    NEW_ASSET:  { icon: 'trending-up-outline',   bg: brandColors.blueBg,    fg: brandColors.blueText,  sign: '+' },
+    SOLD_ASSET: { icon: 'trending-down-outline', bg: brandColors.blueBg,    fg: brandColors.blueText,  sign: '-' },
+    OTHER:      { icon: 'ellipse-outline',       bg: brandColors.purpleDim, fg: brandColors.purple,    sign: '' },
   };
 }
 
@@ -275,8 +283,9 @@ function TransactionRow({
   brandColors: BrandColors;
 }) {
   const s = makeStyles(colors);
+  const normType = normalizeTxType(type);
   const TX_ROW_STYLE = getTxRowStyle(brandColors);
-  const ts = TX_ROW_STYLE[type] ?? TX_ROW_STYLE.OTHER;
+  const ts = TX_ROW_STYLE[normType] ?? TX_ROW_STYLE.OTHER;
   const hidden = useBalanceVisibility((st) => st.hidden);
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={[s.expenseRow, { backgroundColor: colors.surface }]}>
@@ -295,7 +304,7 @@ function TransactionRow({
       </View>
       <View style={{ alignItems: 'flex-end' }}>
         <CText
-          txt={type === 'ASSET' && hidden ? BALANCE_MASK : `${ts.sign}${formatAmount(amount, currency)}`}
+          txt={isAssetType(normType) && hidden ? BALANCE_MASK : `${ts.sign}${formatAmount(amount, currency)}`}
           style={[s.expenseAmount, { color: ts.fg }]}
         />
         <CText txt={timeLabel} style={[s.expenseTime, { color: colors.textMuted }]} numberOfLines={1} />

@@ -5,7 +5,13 @@ import CText from '../../../core/component/CText';
 import { AppColors, getBrandColors, radius, shadow } from '../../../core/utils';
 
 type BrandColors = ReturnType<typeof getBrandColors>;
-import { Transaction, TransactionType } from '../../../core/types/transaction';
+import { isAssetType, Transaction, TransactionType } from '../../../core/types/transaction';
+
+// Legacy docs written before OLD_ASSET/NEW_ASSET/SOLD_ASSET existed still
+// carry type "ASSET" — treat those as OLD_ASSET (their original behavior).
+function normalizeType(type: TransactionType): TransactionType {
+  return (type as string) === 'ASSET' ? 'OLD_ASSET' : type;
+}
 import { useBalanceVisibility } from '../../../core/store/balance/useBalanceVisibility';
 
 const BALANCE_MASK = '••••••';
@@ -45,12 +51,25 @@ function monthLabel(ms: number): string {
 
 function getTypeStyle(brandColors: BrandColors): Record<TransactionType, { icon: React.ComponentProps<typeof Ionicons>['name']; bg: string; fg: string; sign: '+' | '-' | '' }> {
   return {
-    EXPENSE: { icon: 'arrow-down-outline',  bg: brandColors.redBg,   fg: brandColors.redText,   sign: '-' },
-    INCOME:  { icon: 'arrow-up-outline',    bg: brandColors.greenBg, fg: brandColors.greenText, sign: '+' },
-    ASSET:   { icon: 'trending-up-outline', bg: brandColors.blueBg,  fg: brandColors.blueText,  sign: '+' },
-    OTHER:   { icon: 'ellipse-outline',     bg: brandColors.purpleDim, fg: brandColors.purple,  sign: '' },
+    // `sign` here is the row's own display sign (does this holding go up or
+    // down) — separate from whether it counts toward the day's net-worth-
+    // changing total, which groupByMonthThenDay computes on its own using
+    // NET_CONTRIBUTES below (NEW_ASSET/SOLD_ASSET are reallocations between
+    // cash and a holding, so they never change net worth even though the
+    // row itself still shows a +/- for that holding).
+    EXPENSE:    { icon: 'arrow-down-outline',    bg: brandColors.redBg,     fg: brandColors.redText,   sign: '-' },
+    INCOME:     { icon: 'arrow-up-outline',      bg: brandColors.greenBg,  fg: brandColors.greenText, sign: '+' },
+    OLD_ASSET:  { icon: 'trending-up-outline',   bg: brandColors.blueBg,    fg: brandColors.blueText,  sign: '+' },
+    NEW_ASSET:  { icon: 'trending-up-outline',   bg: brandColors.blueBg,    fg: brandColors.blueText,  sign: '+' },
+    SOLD_ASSET: { icon: 'trending-down-outline', bg: brandColors.blueBg,    fg: brandColors.blueText,  sign: '-' },
+    OTHER:      { icon: 'ellipse-outline',       bg: brandColors.purpleDim, fg: brandColors.purple,    sign: '' },
   };
 }
+
+// NEW_ASSET/SOLD_ASSET move money between cash and a holding — a pure
+// reallocation that never changes net worth, so they don't contribute to
+// the day's running "net" total shown in the section header.
+const NET_NEUTRAL_TYPES: readonly TransactionType[] = ['NEW_ASSET', 'SOLD_ASSET'];
 
 // Two-level grouping (month → day) flattened into SectionList sections.
 type DaySection = { title: string; monthTitle: string; net: number; hasAsset: boolean; data: Transaction[] };
@@ -75,9 +94,12 @@ function groupByMonthThenDay(
 
     const section = sections[sections.length - 1];
     section.data.push(tx);
-    const sign = typeStyle[tx.type]?.sign;
-    section.net += sign === '-' ? -tx.amount : sign === '+' ? tx.amount : 0;
-    if (tx.type === 'ASSET') section.hasAsset = true;
+    const type = normalizeType(tx.type);
+    const sign = typeStyle[type]?.sign;
+    if (!NET_NEUTRAL_TYPES.includes(type)) {
+      section.net += sign === '-' ? -tx.amount : sign === '+' ? tx.amount : 0;
+    }
+    if (isAssetType(type)) section.hasAsset = true;
   }
 
   return sections;
@@ -132,7 +154,8 @@ export function TransactionGroupedList({
         );
       }}
       renderItem={({ item }) => {
-        const ts = TYPE_STYLE[item.type] ?? TYPE_STYLE.OTHER;
+        const itemType = normalizeType(item.type);
+        const ts = TYPE_STYLE[itemType] ?? TYPE_STYLE.OTHER;
         return (
           <TouchableOpacity
             activeOpacity={0.8}
@@ -154,7 +177,7 @@ export function TransactionGroupedList({
             </View>
             <View style={{ alignItems: 'flex-end' }}>
               <CText
-                txt={item.type === 'ASSET' && hidden ? BALANCE_MASK : `${ts.sign}${formatAmount(item.amount, item.currency)}`}
+                txt={isAssetType(itemType) && hidden ? BALANCE_MASK : `${ts.sign}${formatAmount(item.amount, item.currency)}`}
                 style={[s.amount, { color: ts.fg }]}
               />
               <CText txt={formatDateTime(item.timestamp)} style={[s.time, { color: colors.textMuted }]} numberOfLines={1} />

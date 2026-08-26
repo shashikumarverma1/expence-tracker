@@ -47,6 +47,9 @@ function computeDelta(f: AppliedFields): Record<string, number> {
   if (f.type === 'INCOME') {
     // "Cash" credits the cash field directly; every other income category
     // (Salary, Freelance, Bank/Digital Cash, …) credits Bank/Digital Cash.
+    // This also covers Interest/Dividend earned on a held asset — that gain
+    // is real net-worth growth, so it's recorded as INCOME, never folded
+    // into a NEW_ASSET/SOLD_ASSET delta below.
     const field = f.category === 'Cash' ? ASSET_FIELD_MAP['Cash'] : CASH_FIELD;
     // "Loan" is borrowed money — it lands in cash/bank same as any income,
     // but it's not a net-worth gain, so an equal amount goes to liabilities.
@@ -55,9 +58,23 @@ function computeDelta(f: AppliedFields): Record<string, number> {
     }
     return { [field]: f.amount };
   }
-  if (f.type === 'ASSET') {
-    const holding = f.category ? ASSET_FIELD_MAP[f.category] : undefined;
+  const holding = f.category ? ASSET_FIELD_MAP[f.category] : undefined;
+  // OLD_ASSET: the user is just stating a holding they already have — only
+  // the asset field moves, no cash field is touched.
+  if (f.type === 'OLD_ASSET') {
     return holding ? { [holding]: f.amount } : { [CASH_FIELD]: f.amount };
+  }
+  // NEW_ASSET: bought using tracked cash/bank money — a reallocation, not
+  // income or expense, so total net worth is unchanged: the holding goes up
+  // and cash/bank goes down by the same amount.
+  if (f.type === 'NEW_ASSET') {
+    return holding ? { [holding]: f.amount, [CASH_FIELD]: -f.amount } : { [CASH_FIELD]: 0 };
+  }
+  // SOLD_ASSET: the holding is liquidated back to cash/bank — the reverse
+  // reallocation. Any profit/interest above principal must have already
+  // been (or should separately be) recorded as its own INCOME entry.
+  if (f.type === 'SOLD_ASSET') {
+    return holding ? { [holding]: -f.amount, [CASH_FIELD]: f.amount } : { [CASH_FIELD]: f.amount };
   }
   return {};
 }
@@ -100,7 +117,9 @@ export const updateNetWorth = functions
       // If the doc's been deleted, its final pre-delete data (still carrying
       // appliedFields) is on `change.before` — it can't change further.
       const priorSrc = txnSnap.exists ? txnSnap.data() : change.before.data();
-      const priorApplied = priorSrc?.appliedFields as AppliedFields | undefined;
+      let priorApplied = priorSrc?.appliedFields as AppliedFields | undefined;
+      // Legacy appliedFields recorded as type "ASSET" (pre OLD/NEW/SOLD split).
+      if (priorApplied?.type === 'ASSET') priorApplied = { ...priorApplied, type: 'OLD_ASSET' };
       if (priorApplied) {
         const delta = computeDelta(priorApplied);
         for (const [k, v] of Object.entries(delta)) current[k] = (current[k] ?? 0) - v;
@@ -112,9 +131,18 @@ export const updateNetWorth = functions
         const data = txnSnap.data() as {
           needsConfirmation?: boolean; type?: string; amount?: number; category?: string | null;
         };
+        // Legacy docs written before OLD_ASSET/NEW_ASSET/SOLD_ASSET existed
+        // still carry type "ASSET" — treat those the same as OLD_ASSET
+        // (their original behavior: only the holding field moves).
+        const effectiveType = data.type === 'ASSET' ? 'OLD_ASSET' : data.type;
         if (!data.needsConfirmation && typeof data.amount === 'number'
-          && (data.type === 'EXPENSE' || data.type === 'INCOME' || data.type === 'ASSET')) {
-          const applied: AppliedFields = { type: data.type, amount: data.amount, category: data.category ?? null };
+          && (effectiveType === 'EXPENSE' || effectiveType === 'INCOME'
+            || effectiveType === 'OLD_ASSET' || effectiveType === 'NEW_ASSET' || effectiveType === 'SOLD_ASSET')) {
+          const applied: AppliedFields = {
+            type: effectiveType,
+            amount: data.amount,
+            category: data.category ?? null,
+          };
           const delta = computeDelta(applied);
           for (const [k, v] of Object.entries(delta)) current[k] = (current[k] ?? 0) + v;
           nextApplied = applied;
