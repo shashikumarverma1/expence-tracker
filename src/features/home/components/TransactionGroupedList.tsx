@@ -167,11 +167,11 @@ export function TransactionGroupedList({
             </View>
             <View style={s.mid}>
               <CText
-                txt={item.category || item.rawSummary || 'Entry'}
+                txt={isAssetType(itemType) && hidden ? BALANCE_MASK : (item.category || item.rawSummary || 'Entry')}
                 style={[s.summary, { color: colors.text }]}
                 numberOfLines={1}
               />
-              {!!item.rawSummary && item.category && (
+              {!(isAssetType(itemType) && hidden) && !!item.rawSummary && item.category && (
                 <CText txt={item.rawSummary} style={[s.meta, { color: colors.textMuted }]} numberOfLines={1} />
               )}
             </View>

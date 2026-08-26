@@ -294,11 +294,11 @@ function TransactionRow({
       </View>
       <View style={{ flex: 1 }}>
         <CText
-          txt={category || summary || 'Entry'}
+          txt={isAssetType(normType) && hidden ? BALANCE_MASK : (category || summary || 'Entry')}
           style={[s.expenseTitle, { color: colors.text }]}
           numberOfLines={1}
         />
-        {!!summary && category && (
+        {!(isAssetType(normType) && hidden) && !!summary && category && (
           <CText txt={summary} style={[s.expenseSub, { color: colors.textMuted }]} numberOfLines={1} />
         )}
       </View>

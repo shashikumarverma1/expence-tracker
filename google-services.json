@@ -1,36 +1,26 @@
 {
   "project_info": {
-    "project_number": "443156738328",
-    "project_id": "tradelog-9be46",
-    "storage_bucket": "tradelog-9be46.firebasestorage.app"
+    "project_number": "150201871966",
+    "project_id": "cashleak-bb721",
+    "storage_bucket": "cashleak-bb721.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:443156738328:android:3f5b0faeee6955cdb02e6d",
+        "mobilesdk_app_id": "1:150201871966:android:9276c4c61023fcbe5b0ecf",
         "android_client_info": {
-          "package_name": "com.tradelog.journal"
+          "package_name": "com.cashleak.app"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "443156738328-9il41kd0ndh0b7os1a4gt02uudp3d6he.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBf-rR-ajY_A8-gSC8h9GEQOTw-TvuEYTc"
+          "current_key": "AIzaSyDJxp0hq52OfB9ZnMIkTqpZhZTarNNDEMU"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "443156738328-9il41kd0ndh0b7os1a4gt02uudp3d6he.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }

@@ -8,7 +8,7 @@ import { showAlert } from '../../../core/store/alert/useAlertStore';
 
 // TODO: replace with the numeric Apple App Store id once the app is published on iOS
 const APPLE_APP_ID = 'YOUR_APPLE_APP_ID';
-const ANDROID_PACKAGE_NAME = 'com.tradelog.journal';
+const ANDROID_PACKAGE_NAME = 'com.cashleak.app';
 
 const IOS_STORE_URL = `itms-apps://itunes.apple.com/app/id${APPLE_APP_ID}?action=write-review`;
 const ANDROID_STORE_URL = `market://details?id=${ANDROID_PACKAGE_NAME}`;

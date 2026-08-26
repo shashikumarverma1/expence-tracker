@@ -59,7 +59,11 @@ export function AssetClassDetailScreen() {
           <Ionicons name={isSold ? 'arrow-down' : 'arrow-up'} size={16} color={color} />
         </View>
         <View style={s.mid}>
-          <CText txt={item.rawSummary || 'Asset added'} style={[s.summary, { color: colors.text }]} numberOfLines={2} />
+          <CText
+            txt={isAsset && hidden ? BALANCE_MASK : (item.rawSummary || 'Asset added')}
+            style={[s.summary, { color: colors.text }]}
+            numberOfLines={2}
+          />
           <CText txt={formatDate(item.timestamp)} style={[s.meta, { color: colors.textMuted }]} />
         </View>
         <CText
