@@ -45,7 +45,8 @@
           "microphonePermission": "CashLeak needs microphone access to record your voice journal entries.",
           "speechRecognitionPermission": "CashLeak uses speech recognition to transcribe your voice journal entries."
         }
-      ]
+      ],
+      "./plugins/withAndroidGradleJvmArgs"
     ],
     "ios": {
       "supportsTablet": true,

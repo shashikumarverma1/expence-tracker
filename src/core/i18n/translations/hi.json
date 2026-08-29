@@ -36,7 +36,7 @@
   "share_app": "ऐप शेयर करें",
   "delete_account": "अकाउंट हटाएं",
   "delete_account_title": "अकाउंट हटाएं?",
-  "delete_account_warning": "यह आपके अकाउंट और सारा ट्रेड डेटा स्थायी रूप से हटा देगा। यह क्रिया वापस नहीं की जा सकती।",
+  "delete_account_warning": "यह आपके अकाउंट और सारा वित्तीय डेटा स्थायी रूप से हटा देगा। यह क्रिया वापस नहीं की जा सकती।",
   "delete_account_password_prompt": "पुष्टि के लिए पासवर्ड दर्ज करें",
   "delete_account_success": "अकाउंट सफलतापूर्वक हटाया गया",
   "requires_recent_login": "अकाउंट हटाने से पहले कृपया लॉग आउट करके दोबारा लॉग इन करें।",
@@ -47,86 +47,79 @@
   "take_photo": "फ़ोटो खींचें",
   "choose_from_library": "गैलरी से चुनें",
   "save_changes": "बदलाव सहेजें",
-
   "home_screen": {
     "greeting_morning": "सुप्रभात 🌅",
     "greeting_afternoon": "शुभ दोपहर ☀️",
     "greeting_evening": "शुभ संध्या 🌆",
     "greeting_night": "शुभ रात्रि 🌙",
-    "recent_trades": "हाल के ट्रेड",
-    "no_trades_title": "अभी कोई ट्रेड नहीं",
-    "no_trades_sub": "पहला ट्रेड लॉग करने के लिए माइक टैप करें",
-    "free_limit": "{{count}} मुफ़्त ट्रेड बचे हैं",
+    "recent_trades": "हाल की गतिविधि",
+    "no_trades_title": "अभी कुछ भी दर्ज नहीं",
+    "no_trades_sub": "पहली एंट्री लॉग करने के लिए माइक टैप करें",
+    "free_limit": "{{count}} मुफ़्त एंट्री बची हैं",
     "free_limit_reached": "मुफ़्त सीमा खत्म — अधिक लॉग करने के लिए अपग्रेड करें",
     "type_instead": "✏️ टाइप करें"
   },
-
   "trade": {
-    "emotion_fearful": "डरा हुआ",
-    "emotion_greedy": "लालची",
+    "emotion_fearful": "चिंतित",
+    "emotion_greedy": "आवेगपूर्ण",
     "emotion_fomo": "FOMO",
     "emotion_confident": "आत्मविश्वासी",
-    "emotion_revenge": "बदला",
+    "emotion_revenge": "पछतावा",
     "emotion_calm": "शांत",
-    "result_profit": "लाभ",
-    "result_loss": "हानि",
-    "result_breakeven": "ब्रेकईवन",
-    "result_no_trade": "ट्रेड नहीं",
-    "detail_title_audio": "ट्रेड लॉग हुआ",
-    "detail_title_text": "ट्रेड नोट हुआ",
+    "result_profit": "सही खर्च",
+    "result_loss": "बेकार खर्च",
+    "result_breakeven": "सामान्य",
+    "result_no_trade": "कोई खर्च नहीं",
+    "detail_title_audio": "एंट्री लॉग हुई",
+    "detail_title_text": "एंट्री नोट हुई",
     "transcription_label": "आपने क्या कहा",
     "ai_summary_label": "AI सारांश",
-    "emotion_label": "भावना",
-    "result_label": "परिणाम",
-    "pnl_label": "P&L",
+    "emotion_label": "कैसा लगा",
+    "result_label": "फैसला",
+    "pnl_label": "राशि",
     "looks_right": "सही है — सहेजें",
     "add_note": "नोट जोड़ें",
     "edit_note": "नोट संपादित करें",
     "note_placeholder": "अधिक संदर्भ जोड़ें…",
     "save_note": "सहेजें",
-    "select_emotion": "भावना चुनें",
-    "select_result": "परिणाम चुनें",
-    "mandatory_hint": "भावना और परिणाम अनिवार्य हैं",
+    "select_emotion": "चुनें कि कैसा लगा",
+    "select_result": "फैसला चुनें",
+    "mandatory_hint": "भावना और फैसला अनिवार्य हैं",
     "saving": "सहेजा जा रहा है…",
     "analyzing": "विश्लेषण हो रहा है…",
     "transcribing": "ट्रांसक्राइब हो रहा है…"
   },
-
   "pattern": {
     "title": "पैटर्न",
-    "subtitle": "आपके अंतिम 5 ट्रेड का AI विश्लेषण",
+    "subtitle": "आपकी अंतिम 5 एंट्री का AI विश्लेषण",
     "subtitle_report": "आपका पैसा कहाँ से आता है और कहाँ जाता है",
     "generating": "पैटर्न रिपोर्ट बन रही है…",
     "no_trades_title": "अभी कोई पैटर्न नहीं",
-    "no_trades_sub": "पैटर्न विश्लेषण के लिए कम से कम 5 ट्रेड लॉग करें",
-    "no_trades_sub_count": "अपना पहला पैटर्न रिपोर्ट अनलॉक करने के लिए {{count}} और ट्रेड लॉग करें",
+    "no_trades_sub": "पैटर्न विश्लेषण के लिए कम से कम 5 एंट्री लॉग करें",
+    "no_trades_sub_count": "अपनी पहली पैटर्न रिपोर्ट अनलॉक करने के लिए {{count}} और एंट्री लॉग करें",
     "happened_count": "इस महीने {{count}} बार हुआ",
     "severity_high": "उच्च",
     "severity_medium": "मध्यम",
     "severity_low": "कम",
-    "recent_trades_label": "संबंधित ट्रेड"
+    "recent_trades_label": "संबंधित एंट्री"
   },
-
   "streak": {
     "day_streak": "दिन की स्ट्रीक",
-    "motivation_start": "आज पहला ट्रेड लॉग करें!",
+    "motivation_start": "आज पहली एंट्री लॉग करें!",
     "motivation_day1": "शानदार शुरुआत! आगे बढ़ते रहें!",
     "motivation_days": "{{count}} दिन मज़बूत! 💪",
     "motivation_week": "एक हफ्ता! शानदार! 🎉",
     "motivation_month": "{{count}} दिन! अजेय!"
   },
-
   "record_btn": {
-    "tap_to_record": "ट्रेड रिकॉर्ड करने के लिए टैप करें"
+    "tap_to_record": "एंट्री रिकॉर्ड करने के लिए टैप करें"
   },
-
   "mood_card": {
-    "question": "आज ट्रेडिंग कैसी रही?",
-    "record_and_log": "🎙️  ट्रेड रिकॉर्ड करें",
+    "question": "आज खर्च कैसा रहा?",
+    "record_and_log": "🎙️  एंट्री रिकॉर्ड करें",
     "logged_at": "{{time}} पर दर्ज किया गया",
     "tap_to_open": "खोलने के लिए टैप करें"
   },
-
   "mood": {
     "sad": "उदास",
     "worried": "चिंतित",
@@ -134,16 +127,14 @@
     "good": "अच्छा",
     "happy": "खुश"
   },
-
   "recent_entries": {
-    "title": "हाल के ट्रेड",
+    "title": "हाल की गतिविधि",
     "see_all": "सभी देखें",
-    "no_entries_title": "अभी कोई ट्रेड नहीं",
-    "no_entries_sub": "पहला ट्रेड रिकॉर्ड करें",
-    "load_samples": "✨ नमूना ट्रेड लोड करें",
+    "no_entries_title": "अभी कुछ भी दर्ज नहीं",
+    "no_entries_sub": "पहली एंट्री रिकॉर्ड करें",
+    "load_samples": "✨ नमूना एंट्री लोड करें",
     "upgrade_for_insights": "🔒 AI पैटर्न के लिए अपग्रेड करें"
   },
-
   "expenses": {
     "title": "खर्च",
     "see_all": "सभी देखें",
@@ -151,7 +142,6 @@
     "no_entries_title": "अभी कोई खर्च नहीं",
     "no_entries_sub": "माइक टैप करें और बताएं कि आपने किस पर खर्च किया।"
   },
-
   "assets": {
     "title": "संपत्ति",
     "see_all": "सभी देखें",
@@ -159,7 +149,6 @@
     "no_entries_title": "अभी कोई संपत्ति नहीं",
     "no_entries_sub": "माइक टैप करें और बताएं कि आपने क्या कमाया या कहाँ निवेश किया।"
   },
-
   "transactions": {
     "title": "लेन-देन",
     "see_all": "सभी देखें",
@@ -167,7 +156,6 @@
     "no_entries_title": "अभी कोई लेन-देन नहीं",
     "no_entries_sub": "माइक टैप करें और बताएं कि आपके पैसों के साथ क्या हुआ।"
   },
-
   "budget": {
     "title": "मासिक बजट",
     "set_cta": "मासिक बजट सेट करें",
@@ -177,17 +165,15 @@
     "placeholder": "0",
     "save": "सहेजें"
   },
-
   "weekly": {
     "title": "इस सप्ताह",
     "view_calendar": "कैलेंडर देखें",
     "most_common": "सबसे आम: {{mood}}",
     "best_day": "सबसे अच्छा दिन: {{day}} 😊",
     "pro_insight": "आपका सप्ताह अनुशासित रहा। जारी रखें!",
-    "ai_placeholder": "आपका सप्ताह अधिकतर लाभदायक रहा...",
+    "ai_placeholder": "आपका सप्ताह अच्छा रहा, खर्च ज़्यादातर नियंत्रण में...",
     "upgrade_insights": "🔒 साप्ताहिक इनसाइट्स के लिए अपग्रेड करें"
   },
-
   "record_screen": {
     "title": "एंट्री लॉग करें",
     "discard_title": "रिकॉर्डिंग हटाएं?",
@@ -214,29 +200,27 @@
     "mic_needed_sub": "एंट्री रिकॉर्ड करने के लिए कृपया Settings में माइक्रोफ़ोन की अनुमति दें।",
     "open_settings": "Settings खोलें"
   },
-
   "mood_checkin": {
     "title": "आप कैसा महसूस कर रहे हैं?",
     "your_recording": "आपकी रिकॉर्डिंग",
     "no_transcript": "कोई ट्रांसक्रिप्ट उपलब्ध नहीं",
-    "select_mood": "वह भावना चुनें जो अभी आपकी स्थिति को सबसे अच्छे से दर्शाती है",
+    "select_mood": "वह भावना चुनें जो इस बारे में आपकी स्थिति को सबसे अच्छे से दर्शाती है",
     "feeling": "{{mood}} महसूस कर रहे हैं",
     "mood_recorded": "आज की भावना दर्ज कर ली गई",
     "generating_insight": "इनसाइट बन रही है…",
     "ai_insight": "AI इनसाइट",
     "coach_message": "कोच",
-    "save_to_journal": "ट्रेड सहेजें",
+    "save_to_journal": "एंट्री सहेजें",
     "subscribe_to_save": "सहेजने के लिए सब्सक्राइब करें",
     "saving": "सहेजा जा रहा है…",
     "uploading": "ऑडियो अपलोड हो रहा है…",
-    "saving_entry": "ट्रेड सहेजा जा रहा है…"
+    "saving_entry": "एंट्री सहेजी जा रही है…"
   },
-
   "mood_calendar": {
-    "title": "ट्रेड कैलेंडर",
+    "title": "गतिविधि कैलेंडर",
     "mood_key": "भावना की कुंजी",
     "monthly_summary": "मासिक सारांश",
-    "entries": "ट्रेड",
+    "entries": "एंट्री",
     "top_mood": "शीर्ष भावना",
     "best_streak": "सर्वश्रेष्ठ स्ट्रीक",
     "days": {
@@ -263,61 +247,57 @@
       "december": "दिसंबर"
     }
   },
-
   "journal_list": {
-    "title": "सभी ट्रेड",
-    "count_one": "{{count}} ट्रेड",
-    "count_other": "{{count}} ट्रेड",
-    "search_placeholder": "ट्रेड खोजें…",
+    "title": "सभी एंट्री",
+    "count_one": "{{count}} एंट्री",
+    "count_other": "{{count}} एंट्री",
+    "search_placeholder": "एंट्री खोजें…",
     "filter_all": "सभी",
-    "no_entries_title": "अभी कोई ट्रेड नहीं",
-    "no_entries_sub": "ट्रेड इतिहास बनाने के लिए लॉग करना शुरू करें",
+    "no_entries_title": "अभी कोई एंट्री नहीं",
+    "no_entries_sub": "अपना पैसा इतिहास बनाने के लिए लॉग करना शुरू करें",
     "no_matches_title": "कोई परिणाम नहीं",
     "no_matches_sub": "अलग फ़िल्टर या खोज शब्द आज़माएं",
     "no_transcript": "कोई ट्रांसक्रिप्ट नहीं",
-    "start_recording": "ट्रेड लॉग करें",
+    "start_recording": "एंट्री लॉग करें",
     "today": "आज",
     "yesterday": "कल",
     "ai_insight": "AI सारांश"
   },
-
   "journal_detail": {
-    "title": "ट्रेड प्रविष्टि",
+    "title": "एंट्री विवरण",
     "transcript": "ट्रांसक्रिप्ट",
     "ai_insight": "AI सारांश",
     "audio_unavailable": "ऑडियो उपलब्ध नहीं",
-    "not_found": "प्रविष्टि नहीं मिली।",
+    "not_found": "एंट्री नहीं मिली।",
     "go_back": "← वापस जाएं",
     "words": "शब्द",
     "min_recorded": "मिनट रिकॉर्ड",
     "mood_label": "भावना",
     "upgrade_insights": "AI इनसाइट्स अनलॉक करने के लिए अपग्रेड करें"
   },
-
   "onboarding": {
     "skip": "छोड़ें",
     "next": "आगे",
     "continue": "जारी रखें",
     "get_started": "शुरू करें",
-    "welcome_title": "Money Flow में आपका स्वागत है",
-    "market_question": "आप क्या ट्रेड करते हैं?",
-    "market_sub": "अपना प्राथमिक बाज़ार चुनें",
+    "welcome_title": "CashLeak में आपका स्वागत है",
+    "market_question": "आप क्या ट्रैक करना चाहते हैं?",
+    "market_sub": "अपना मुख्य फ़ोकस चुनें",
     "broker_step": "चरण 2 / 2",
-    "broker_question": "आपका ब्रोकर?",
+    "broker_question": "आपका मुख्य बैंक या वॉलेट?",
     "broker_sub": "केवल संदर्भ के लिए — कोई लॉगिन नहीं",
-    "broker_other_placeholder": "अपने ब्रोकर का नाम टाइप करें…",
-    "slide1_title": "आवाज़ से ट्रेड लॉग करें",
-    "slide1_sub": "बस अपने ट्रेड के बारे में बोलें।\nAI बाकी काम करेगा।",
-    "slide2_title": "पैटर्न पहचानें",
-    "slide2_sub": "AI आपके अंतिम 5 ट्रेड से\nभावनात्मक पैटर्न खोजता है।",
-    "slide3_title": "स्मार्ट ट्रेड करें",
-    "slide3_sub": "P&L, भावनाएं और परिणाम\nएक जगह ट्रैक करें।",
-    "paywall_title": "Money Flow पूरी तरह अनलॉक करें",
-    "paywall_sub": "असीमित ट्रेड, AI पैटर्न रिपोर्ट और विस्तृत मनोविज्ञान इनसाइट।",
+    "broker_other_placeholder": "अपने बैंक या वॉलेट का नाम टाइप करें…",
+    "slide1_title": "आवाज़ से पैसा लॉग करें",
+    "slide1_sub": "बस बोलें कि आपने क्या खर्च किया या कमाया।\nAI बाकी काम करेगा।",
+    "slide2_title": "अपनी मनी लीक खोजें",
+    "slide2_sub": "AI आपकी हाल की एंट्री से\nखर्च के पैटर्न खोजता है।",
+    "slide3_title": "हर रुपया ट्रैक करें",
+    "slide3_sub": "खर्च, आय, संपत्ति और\nनेट वर्थ एक जगह।",
+    "paywall_title": "CashLeak पूरी तरह अनलॉक करें",
+    "paywall_sub": "असीमित एंट्री, AI पैटर्न रिपोर्ट और विस्तृत खर्च इनसाइट।",
     "paywall_see_plans": "प्लान देखें",
-    "paywall_free": "मुफ्त जारी रखें (10 ट्रेड)"
+    "paywall_free": "मुफ्त जारी रखें (10 एंट्री)"
   },
-
   "plan_screen": {
     "title": "मेरा प्लान",
     "current_plan": "वर्तमान प्लान",
@@ -345,15 +325,13 @@
     "one_time": "एकमुश्त खरीद",
     "expires_on": "समाप्ति तिथि"
   },
-
   "settings_screen": {
     "plan_pro": "Pro प्लान",
     "plan_pro_sub": "सभी सुविधाएं अनलॉक हैं",
     "plan_free": "मुफ्त प्लान",
-    "plan_free_sub": "असीमित ट्रेड और AI पैटर्न के लिए अपग्रेड करें",
+    "plan_free_sub": "असीमित एंट्री और AI पैटर्न के लिए अपग्रेड करें",
     "upgrade": "अपग्रेड करें"
   },
-
   "auth": {
     "loading": "कृपया प्रतीक्षा करें…",
     "creating_account": "खाता बनाया जा रहा है…",
@@ -386,16 +364,14 @@
     "reset_email_sent_msg": "पासवर्ड रीसेट लिंक के लिए अपना इनबॉक्स जांचें।",
     "reset_failed": "रीसेट ईमेल नहीं भेजा जा सका"
   },
-
   "journal_tab": {
-    "title": "ट्रेड",
+    "title": "एंट्री",
     "list_view": "सूची दृश्य",
     "calendar_view": "कैलेंडर दृश्य",
-    "search_placeholder": "ट्रेड खोजें…",
+    "search_placeholder": "एंट्री खोजें…",
     "search_open": "खोज खोलें",
     "search_close": "खोज बंद करें"
   },
-
   "notifications_screen": {
     "title": "सूचनाएं",
     "unread": "{{count}} अपठित",
@@ -417,10 +393,9 @@
     "send_success_sub": "अपना डिवाइस जांचें।",
     "send_failed": "भेजने में विफल"
   },
-
   "subscription": {
     "title": "Pro में अपग्रेड करें",
-    "subtitle": "Money Flow का पूरा अनुभव अनलॉक करें",
+    "subtitle": "CashLeak का पूरा अनुभव अनलॉक करें",
     "toggle_subscribe": "सब्सक्राइब करें",
     "toggle_buy_once": "एक बार खरीदें",
     "btn_subscribe": "{{price}} में सब्सक्राइब करें",
@@ -433,7 +408,7 @@
     "no_offerings_msg": "सब्सक्रिप्शन योजनाएं लोड नहीं हो सकीं। कृपया बाद में पुनः प्रयास करें।",
     "success_title": "सब कुछ तैयार है! 🎉",
     "success_subscription": "आपकी सब्सक्रिप्शन अब सक्रिय है। सभी Pro सुविधाओं का आनंद लें!",
-    "success_one_time": "खरीद पूर्ण हुई। Money Flow अपग्रेड का आनंद लें!",
+    "success_one_time": "खरीद पूर्ण हुई। CashLeak अपग्रेड का आनंद लें!",
     "purchase_failed": "खरीद विफल",
     "restore_title": "खरीदारी पुनः प्राप्त की गई",
     "restore_success": "आपकी खरीदारी सफलतापूर्वक पुनः प्राप्त कर ली गई है।",
@@ -445,6 +420,11 @@
     "manage_subscription": "Google Play पर प्रबंधित करें",
     "badge_popular": "लोकप्रिय",
     "badge_save_dynamic": "{{percent}}% बचाएं",
+    "price_monthly_fallback": "$4.99",
+    "price_yearly_fallback": "$29.99",
+    "per_month_short": "/माह",
+    "per_year_short": "/वर्ष",
+    "trial_badge": "3-दिन का मुफ्त ट्रायल",
     "plan_free": "मुफ्त",
     "plan_monthly": "मासिक",
     "plan_annual": "वार्षिक",
@@ -452,16 +432,20 @@
     "plan_pro": "प्रो",
     "plan_lifetime": "लाइफटाइम",
     "features": {
-      "recording": "वॉयस ट्रेड लॉगिंग",
-      "mood_tracking": "भावना ट्रैकिंग",
-      "journal_history": "ट्रेड इतिहास",
-      "daily_streaks": "दैनिक स्ट्रीक",
-      "ai_transcription": "AI ट्रांसक्रिप्शन",
-      "ai_insights": "AI-संचालित इनसाइट्स",
-      "weekly_reports": "साप्ताहिक पैटर्न रिपोर्ट",
-      "export_journal": "ट्रेड निर्यात (PDF)",
-      "unlimited_entries": "असीमित ट्रेड प्रविष्टियां",
-      "priority_support": "प्राथमिकता सहायता"
+      "trade_logging": "खर्च और आय ट्रैकिंग",
+      "basic_analytics": "बेसिक खर्च विश्लेषण",
+      "recording": "वॉयस खर्च लॉगिंग",
+      "mood_tracking": "श्रेणी और टैग व्यवस्था",
+      "journal_history": "पूरा लेन-देन इतिहास",
+      "daily_streaks": "दैनिक लॉगिंग स्ट्रीक",
+      "ai_transcription": "AI वॉयस ट्रांसक्रिप्शन",
+      "ai_insights": "AI मनी-लीक इनसाइट्स",
+      "weekly_reports": "साप्ताहिक खर्च रिपोर्ट",
+      "export_journal": "लेन-देन निर्यात (PDF/CSV)",
+      "unlimited_entries": "असीमित लेन-देन",
+      "priority_support": "प्राथमिकता सहायता",
+      "net_worth": "नेट वर्थ और संपत्ति ट्रैकिंग",
+      "budget_alerts": "मासिक बजट और अलर्ट"
     }
   }
 }

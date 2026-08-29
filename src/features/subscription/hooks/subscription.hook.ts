@@ -141,13 +141,21 @@ export const useSubscription = (onSuccess?: () => void, initialTier?: number) =>
         fetchOfferings();
     }, []);
 
+    // Fallback prices shown when the store/RevenueCat offerings can't be loaded.
+    // Live store prices always override these once offerings resolve.
+    const FALLBACK_PRICE: Record<string, string> = {
+        monthly: t('subscription.price_monthly_fallback'),
+        yearly: t('subscription.price_yearly_fallback'),
+    };
+    const FALLBACK_SAVINGS_PERCENT = 50; // $29.99/yr vs $4.99×12
+
     const SUBSCRIPTION_PLANS: DynamicPlan[] = [
-        { id: 'monthly', name: t('subscription.plan_monthly'), price: '', _pkg: null },
+        { id: 'monthly', name: t('subscription.plan_monthly'), price: FALLBACK_PRICE.monthly, _pkg: null },
         {
             id: 'yearly',
             name: t('subscription.plan_annual'),
-            price: '',
-            badge: annualSavingsPercent ? t('subscription.badge_save_dynamic', { percent: annualSavingsPercent }) : undefined,
+            price: FALLBACK_PRICE.yearly,
+            badge: t('subscription.badge_save_dynamic', { percent: annualSavingsPercent ?? FALLBACK_SAVINGS_PERCENT }),
             _pkg: null,
         },
     ];
@@ -290,9 +298,17 @@ export const useSubscription = (onSuccess?: () => void, initialTier?: number) =>
                 // on both Android (proration) and iOS (StoreKit handles upgrade/downgrade automatically).
                 // console.log(productChangeInfo , "productChangeInfo" , selectedPackage)
                 // await Purchases.purchasePackage(selectedPackage, null, productChangeInfo);
-                const baseOption = selectedPackage.product.subscriptionOptions?.find(
-                    (o: any) => o.isBasePlan
-                );
+                const options: any[] = selectedPackage.product.subscriptionOptions ?? [];
+                const planKey = (selectedPackage.packageType ?? '').toUpperCase() === 'ANNUAL' ? 'annual' : 'monthly';
+
+                // New customers with no prior purchase get the 3-day free-trial offer.
+                // Skip it for plan switches (productChangeInfo set) — Play rejects intro
+                // offers on an upgrade/downgrade path.
+                const trialOffer = (Platform.OS === 'android' && trialEligible && !productChangeInfo && FREE_TRIAL_OFFER_ID[planKey])
+                    ? options.find((o: any) => o.offerIdentifier === FREE_TRIAL_OFFER_ID[planKey])
+                    : null;
+
+                const baseOption = trialOffer ?? options.find((o: any) => o.isBasePlan);
 
                 if (baseOption) {
                     await Purchases.purchaseSubscriptionOption(baseOption, productChangeInfo);
@@ -410,14 +426,17 @@ export const useSubscription = (onSuccess?: () => void, initialTier?: number) =>
         Linking.openURL(url).catch(() => { });
     };
 
+    // Play Console offer IDs (base plan: com-cashleak-app-monthly / com-cashleak-app-yearly).
+    // Retention: 30% off, shown when a subscriber tries to cancel.
     const PLAY_OFFER_ID: Record<string, string> = {
-        monthly: 'rentention-off-monthly',
-        annual: 'tradelog-yearly',
+        monthly: 'monthly-retention',
+        annual: 'yearly-retention',
     };
 
+    // Acquisition: 3-day free trial, eligible for new customers only.
     const FREE_TRIAL_OFFER_ID: Record<string, string> = {
-        monthly: 'new-customer-monthly',
-        annual: 'tradelog-yearly-new-user',
+        monthly: 'cashleak-3day-free-trial',
+        annual: 'cashleak-3day-free-trial',
     };
 
     const findPlayOffer = (pkg: any, planType: string) => {
@@ -570,6 +589,7 @@ export const useSubscription = (onSuccess?: () => void, initialTier?: number) =>
         selectedTier,
         selectTier,
         PLANS,
+        FALLBACK_PRICE,
         FEATURES,
         COMPARISON_PLANS,
         FREE_TRIAL_OFFER_ID,

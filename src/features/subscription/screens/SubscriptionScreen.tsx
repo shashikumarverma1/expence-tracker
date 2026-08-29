@@ -79,6 +79,7 @@ const SubscriptionScreen = ({ onClose, isRetentionOffer: isRetentionOfferProp = 
     selectTier,
     offerings,
     trialEligible,
+    FALLBACK_PRICE,
   } = useSubscription(dismiss, isRetentionOffer ? initialTier : 0);
 
   const onPurchase   = isRetentionOffer ? handleAcceptDiscount : handlePurchase;
@@ -91,6 +92,10 @@ const SubscriptionScreen = ({ onClose, isRetentionOffer: isRetentionOfferProp = 
         p.identifier.toLowerCase().includes(planId) ||
         p.product?.identifier?.toLowerCase().includes(planId)
     ) ?? null;
+
+  // Live store price, falling back to the bundled price when offerings fail to load
+  const priceFor = (planId: string): string =>
+    getRcPackage(planId)?.product?.priceString ?? FALLBACK_PRICE?.[planId] ?? '—';
 
   // Show discounted prices only in retention offer mode — use real RC price as base
   const displayPlans = isRetentionOffer
@@ -142,8 +147,8 @@ const SubscriptionScreen = ({ onClose, isRetentionOffer: isRetentionOfferProp = 
         const originalPlan    = PLANS[selectedTier];
         const isYearly        = originalPlan.id === 'yearly';
         const period          = isYearly ? 'year' : 'month';
-        const rcPrice: string | null = getRcPackage(originalPlan.id)?.product?.priceString ?? null;
-        const discountedPrice = rcPrice ? applyDiscount(rcPrice) : null;
+        const rcPrice: string = priceFor(originalPlan.id);
+        const discountedPrice = rcPrice !== '—' ? applyDiscount(rcPrice) : null;
         return (
           <View style={[styles.discountPriceBlock, { backgroundColor: colors.primaryDim, borderColor: colors.primary }]}>
             <View style={[styles.discountBadge, { backgroundColor: colors.primary }]}>
@@ -168,12 +173,7 @@ const SubscriptionScreen = ({ onClose, isRetentionOffer: isRetentionOfferProp = 
       {!isRetentionOffer && <View style={styles.planRow}>
         {displayPlans.map((plan, idx) => {
           const isSelected = selectedTier === idx;
-          const rcPkg = offerings?.availablePackages?.find(
-            (p: any) =>
-              p.identifier.toLowerCase().includes(plan.id) ||
-              p.product?.identifier?.toLowerCase().includes(plan.id)
-          );
-          const realPrice: string | null = rcPkg?.product?.priceString ?? null;
+          const realPrice: string = priceFor(plan.id);
           const period = plan.id === 'yearly' ? '/yr' : '/mo';
           return (
             <TouchableOpacity
@@ -203,7 +203,7 @@ const SubscriptionScreen = ({ onClose, isRetentionOffer: isRetentionOfferProp = 
                 color={isSelected ? colors.primary : colors.text}
                 style={styles.planPrice}
               >
-                {realPrice ?? '—'}{period}
+                {realPrice}{period}
               </CText>
               {trialEligible && (
                 <CText

@@ -36,7 +36,7 @@
   "share_app": "Share App",
   "delete_account": "Delete Account",
   "delete_account_title": "Delete Account?",
-  "delete_account_warning": "This will permanently delete your account and all your trade data. This action cannot be undone.",
+  "delete_account_warning": "This will permanently delete your account and all your financial data. This action cannot be undone.",
   "delete_account_password_prompt": "Enter your password to confirm",
   "delete_account_success": "Account deleted successfully",
   "requires_recent_login": "Please log out and log back in before deleting your account.",
@@ -47,86 +47,79 @@
   "take_photo": "Take Photo",
   "choose_from_library": "Choose from Library",
   "save_changes": "Save Changes",
-
   "home_screen": {
     "greeting_morning": "Good Morning 🌅",
     "greeting_afternoon": "Good Afternoon ☀️",
     "greeting_evening": "Good Evening 🌆",
     "greeting_night": "Good Night 🌙",
-    "recent_trades": "Recent Trades",
-    "no_trades_title": "No trades logged yet",
-    "no_trades_sub": "Tap the mic to log your first trade",
-    "free_limit": "{{count}} free trades remaining",
+    "recent_trades": "Recent Activity",
+    "no_trades_title": "Nothing logged yet",
+    "no_trades_sub": "Tap the mic to log your first entry",
+    "free_limit": "{{count}} free entries remaining",
     "free_limit_reached": "Free limit reached — upgrade to log more",
     "type_instead": "✏️ Type instead"
   },
-
   "trade": {
-    "emotion_fearful": "Fearful",
-    "emotion_greedy": "Greedy",
+    "emotion_fearful": "Anxious",
+    "emotion_greedy": "Impulsive",
     "emotion_fomo": "FOMO",
     "emotion_confident": "Confident",
-    "emotion_revenge": "Revenge",
+    "emotion_revenge": "Regretful",
     "emotion_calm": "Calm",
-    "result_profit": "Profit",
-    "result_loss": "Loss",
-    "result_breakeven": "Breakeven",
-    "result_no_trade": "No Trade",
-    "detail_title_audio": "Trade logged",
-    "detail_title_text": "Trade noted",
+    "result_profit": "Worth it",
+    "result_loss": "Wasteful",
+    "result_breakeven": "Neutral",
+    "result_no_trade": "No spend",
+    "detail_title_audio": "Entry logged",
+    "detail_title_text": "Entry noted",
     "transcription_label": "What you said",
     "ai_summary_label": "AI Summary",
-    "emotion_label": "Emotion",
-    "result_label": "Result",
-    "pnl_label": "P&L",
+    "emotion_label": "How it felt",
+    "result_label": "Verdict",
+    "pnl_label": "Amount",
     "looks_right": "Looks right — save",
     "add_note": "Add a note",
     "edit_note": "Edit note",
     "note_placeholder": "Add more context…",
     "save_note": "Save",
-    "select_emotion": "Select emotion",
-    "select_result": "Select result",
-    "mandatory_hint": "Emotion and result are required",
+    "select_emotion": "Select how it felt",
+    "select_result": "Select a verdict",
+    "mandatory_hint": "Feeling and verdict are required",
     "saving": "Saving…",
     "analyzing": "Analyzing…",
     "transcribing": "Transcribing…"
   },
-
   "pattern": {
     "title": "Patterns",
-    "subtitle": "AI analysis of your last 5 trades",
+    "subtitle": "AI analysis of your last 5 entries",
     "subtitle_report": "Where your money comes from and goes",
     "generating": "Generating your pattern report…",
     "no_trades_title": "No patterns yet",
-    "no_trades_sub": "Log at least 5 trades to unlock pattern analysis",
-    "no_trades_sub_count": "Log {{count}} more trades to unlock your first pattern report",
+    "no_trades_sub": "Log at least 5 entries to unlock pattern analysis",
+    "no_trades_sub_count": "Log {{count}} more entries to unlock your first pattern report",
     "happened_count": "Happened {{count}} times this month",
     "severity_high": "High",
     "severity_medium": "Medium",
     "severity_low": "Low",
-    "recent_trades_label": "Related trades"
+    "recent_trades_label": "Related entries"
   },
-
   "streak": {
     "day_streak": "Day Streak",
-    "motivation_start": "Log your first trade today!",
+    "motivation_start": "Log your first entry today!",
     "motivation_day1": "Great start! Keep going!",
     "motivation_days": "{{count}} days strong! 💪",
     "motivation_week": "One week! Amazing! 🎉",
     "motivation_month": "{{count}} days! Unstoppable!"
   },
-
   "record_btn": {
-    "tap_to_record": "Tap to Record Trade"
+    "tap_to_record": "Tap to Record Entry"
   },
-
   "mood_card": {
-    "question": "How did trading go today?",
-    "record_and_log": "🎙️  Record Trade",
+    "question": "How did spending go today?",
+    "record_and_log": "🎙️  Record Entry",
     "logged_at": "Logged at {{time}}",
     "tap_to_open": "Tap to open"
   },
-
   "mood": {
     "sad": "Sad",
     "worried": "Anxious",
@@ -134,16 +127,14 @@
     "good": "Good",
     "happy": "Happy"
   },
-
   "recent_entries": {
-    "title": "Recent Trades",
+    "title": "Recent Activity",
     "see_all": "See All",
-    "no_entries_title": "No trades logged yet",
-    "no_entries_sub": "Record your first trade",
-    "load_samples": "✨ Load sample trades",
+    "no_entries_title": "Nothing logged yet",
+    "no_entries_sub": "Record your first entry",
+    "load_samples": "✨ Load sample entries",
     "upgrade_for_insights": "🔒 Upgrade for AI patterns"
   },
-
   "expenses": {
     "title": "Expenses",
     "see_all": "See All",
@@ -151,7 +142,6 @@
     "no_entries_title": "No expenses yet",
     "no_entries_sub": "Tap the mic and say what you spent on."
   },
-
   "assets": {
     "title": "Assets",
     "see_all": "See All",
@@ -159,7 +149,6 @@
     "no_entries_title": "No assets yet",
     "no_entries_sub": "Tap the mic and say what you earned or invested in."
   },
-
   "transactions": {
     "title": "Transactions",
     "see_all": "See All",
@@ -167,7 +156,6 @@
     "no_entries_title": "No transactions yet",
     "no_entries_sub": "Tap the mic and say what happened with your money."
   },
-
   "budget": {
     "title": "Monthly Budget",
     "set_cta": "Set a monthly budget",
@@ -177,17 +165,15 @@
     "placeholder": "0",
     "save": "Save"
   },
-
   "weekly": {
     "title": "This Week",
     "view_calendar": "View Calendar",
     "most_common": "Most common: {{mood}}",
     "best_day": "Best day: {{day}} 😊",
     "pro_insight": "You had a disciplined week. Keep it up!",
-    "ai_placeholder": "You had a great week with mostly profitable…",
+    "ai_placeholder": "You had a great week with spending mostly on track…",
     "upgrade_insights": "🔒 Upgrade to see weekly insights"
   },
-
   "record_screen": {
     "title": "Log Entry",
     "discard_title": "Discard this recording?",
@@ -214,30 +200,28 @@
     "mic_needed_sub": "Please enable microphone access in Settings to record your entries.",
     "open_settings": "Open Settings"
   },
-
   "mood_checkin": {
     "title": "How are you feeling?",
     "your_recording": "Your recording",
     "no_transcript": "No transcript available",
-    "select_mood": "Select the mood that best describes how you feel right now",
+    "select_mood": "Select the mood that best describes how you feel about this",
     "feeling": "Feeling {{mood}}",
     "mood_recorded": "Your mood has been recorded for today",
     "generating_insight": "Generating insight…",
     "ai_insight": "AI Insight",
     "coach_message": "Coach",
-    "save_to_journal": "Save Trade",
+    "save_to_journal": "Save Entry",
     "subscribe_to_save": "Subscribe to Save",
     "saving": "Saving…",
     "uploading": "Uploading audio…",
-    "saving_entry": "Saving trade…"
+    "saving_entry": "Saving entry…"
   },
-
   "mood_calendar": {
-    "title": "Trade Calendar",
-    "mood_key": "Emotion Key",
+    "title": "Activity Calendar",
+    "mood_key": "Mood Key",
     "monthly_summary": "Monthly Summary",
-    "entries": "Trades",
-    "top_mood": "Top Emotion",
+    "entries": "Entries",
+    "top_mood": "Top Mood",
     "best_streak": "Best Streak",
     "days": {
       "mon": "Mon",
@@ -263,26 +247,24 @@
       "december": "December"
     }
   },
-
   "journal_list": {
-    "title": "All Trades",
-    "count_one": "{{count}} trade",
-    "count_other": "{{count}} trades",
-    "search_placeholder": "Search trades…",
+    "title": "All Entries",
+    "count_one": "{{count}} entry",
+    "count_other": "{{count}} entries",
+    "search_placeholder": "Search entries…",
     "filter_all": "All",
-    "no_entries_title": "No trades yet",
-    "no_entries_sub": "Start logging to build your trade history",
+    "no_entries_title": "No entries yet",
+    "no_entries_sub": "Start logging to build your money history",
     "no_matches_title": "No matches",
     "no_matches_sub": "Try a different filter or search term",
     "no_transcript": "No transcript",
-    "start_recording": "Log a trade",
+    "start_recording": "Log an entry",
     "today": "Today",
     "yesterday": "Yesterday",
     "ai_insight": "AI Summary"
   },
-
   "journal_detail": {
-    "title": "Trade Entry",
+    "title": "Entry Detail",
     "transcript": "Transcript",
     "ai_insight": "AI Summary",
     "audio_unavailable": "Audio unavailable",
@@ -290,34 +272,32 @@
     "go_back": "← Go back",
     "words": "Words",
     "min_recorded": "Min recorded",
-    "mood_label": "Emotion",
+    "mood_label": "Mood",
     "upgrade_insights": "Upgrade to unlock AI insights"
   },
-
   "onboarding": {
     "skip": "Skip",
     "next": "Next",
     "continue": "Continue",
     "get_started": "Get Started",
-    "welcome_title": "Welcome to Money Flow",
-    "market_question": "What do you trade?",
-    "market_sub": "Pick your primary market",
+    "welcome_title": "Welcome to CashLeak",
+    "market_question": "What do you want to track?",
+    "market_sub": "Pick your main focus",
     "broker_step": "Step 2 of 2",
-    "broker_question": "Your broker?",
+    "broker_question": "Your main bank or wallet?",
     "broker_sub": "For context only — no login needed",
-    "broker_other_placeholder": "Type your broker name…",
-    "slide1_title": "Log Trades by Voice",
-    "slide1_sub": "Just talk about your trade.\nAI does the rest.",
-    "slide2_title": "Spot Your Patterns",
-    "slide2_sub": "AI finds emotional patterns\nfrom your last 5 trades.",
-    "slide3_title": "Trade Smarter",
-    "slide3_sub": "Track P&L, emotions, and\nresults in one place.",
-    "paywall_title": "Unlock full Money Flow",
-    "paywall_sub": "Unlimited trades, AI pattern reports, and detailed psychology insights.",
+    "broker_other_placeholder": "Type your bank or wallet name…",
+    "slide1_title": "Log Money by Voice",
+    "slide1_sub": "Just say what you spent or earned.\nAI does the rest.",
+    "slide2_title": "Find Your Money Leaks",
+    "slide2_sub": "AI spots spending patterns\nfrom your recent entries.",
+    "slide3_title": "Track Every Rupee",
+    "slide3_sub": "Expenses, income, assets, and\nnet worth in one place.",
+    "paywall_title": "Unlock full CashLeak",
+    "paywall_sub": "Unlimited entries, AI pattern reports, and detailed spending insights.",
     "paywall_see_plans": "See Plans",
-    "paywall_free": "Continue free (10 trades)"
+    "paywall_free": "Continue free (10 entries)"
   },
-
   "plan_screen": {
     "title": "My Plan",
     "current_plan": "Current Plan",
@@ -345,15 +325,13 @@
     "one_time": "One-time purchase",
     "expires_on": "Expires on"
   },
-
   "settings_screen": {
     "plan_pro": "Pro Plan",
     "plan_pro_sub": "All features unlocked",
     "plan_free": "Free Plan",
-    "plan_free_sub": "Upgrade for unlimited trades & AI patterns",
+    "plan_free_sub": "Upgrade for unlimited entries & AI patterns",
     "upgrade": "Upgrade"
   },
-
   "auth": {
     "loading": "Please wait…",
     "creating_account": "Creating account…",
@@ -386,16 +364,14 @@
     "reset_email_sent_msg": "Check your inbox for a password reset link.",
     "reset_failed": "Could not send reset email"
   },
-
   "journal_tab": {
-    "title": "Trades",
+    "title": "Entries",
     "list_view": "List View",
     "calendar_view": "Calendar View",
-    "search_placeholder": "Search trades…",
+    "search_placeholder": "Search entries…",
     "search_open": "Open search",
     "search_close": "Close search"
   },
-
   "notifications_screen": {
     "title": "Notifications",
     "unread": "{{count}} unread",
@@ -417,10 +393,9 @@
     "send_success_sub": "Check your device.",
     "send_failed": "Failed to send"
   },
-
   "subscription": {
     "title": "Upgrade to Pro",
-    "subtitle": "Unlock the full Money Flow experience",
+    "subtitle": "Unlock the full CashLeak experience",
     "toggle_subscribe": "Subscribe",
     "toggle_buy_once": "Buy Once",
     "btn_subscribe": "Subscribe for {{price}}",
@@ -433,7 +408,7 @@
     "no_offerings_msg": "Unable to load subscription plans. Please try again later.",
     "success_title": "You're all set! 🎉",
     "success_subscription": "Your subscription is now active. Enjoy all Pro features!",
-    "success_one_time": "Purchase complete. Enjoy your Money Flow upgrade!",
+    "success_one_time": "Purchase complete. Enjoy your CashLeak upgrade!",
     "purchase_failed": "Purchase Failed",
     "restore_title": "Purchases Restored",
     "restore_success": "Your purchases have been restored successfully.",
@@ -445,6 +420,11 @@
     "manage_subscription": "Manage on Google Play",
     "badge_popular": "Popular",
     "badge_save_dynamic": "Save {{percent}}%",
+    "price_monthly_fallback": "$4.99",
+    "price_yearly_fallback": "$29.99",
+    "per_month_short": "/mo",
+    "per_year_short": "/yr",
+    "trial_badge": "3-day free trial",
     "plan_free": "Free",
     "plan_monthly": "Monthly",
     "plan_annual": "Yearly",
@@ -452,18 +432,20 @@
     "plan_pro": "Pro",
     "plan_lifetime": "Lifetime",
     "features": {
-      "trade_logging": "Trade logging",
-      "basic_analytics": "Basic analytics",
-      "recording": "Voice trade logging",
-      "mood_tracking": "Emotion tracking",
-      "journal_history": "Trade history",
-      "daily_streaks": "Daily streaks",
-      "ai_transcription": "AI transcription",
-      "ai_insights": "AI-powered insights",
-      "weekly_reports": "Weekly pattern report",
-      "export_journal": "Export trades (PDF)",
-      "unlimited_entries": "Unlimited trade entries",
-      "priority_support": "Priority support"
+      "trade_logging": "Expense & income tracking",
+      "basic_analytics": "Basic spending analytics",
+      "recording": "Voice expense logging",
+      "mood_tracking": "Category & tag organizing",
+      "journal_history": "Full transaction history",
+      "daily_streaks": "Daily logging streaks",
+      "ai_transcription": "AI voice transcription",
+      "ai_insights": "AI money-leak insights",
+      "weekly_reports": "Weekly spending reports",
+      "export_journal": "Export transactions (PDF/CSV)",
+      "unlimited_entries": "Unlimited transactions",
+      "priority_support": "Priority support",
+      "net_worth": "Net worth & asset tracking",
+      "budget_alerts": "Monthly budget & alerts"
     }
   }
 }
